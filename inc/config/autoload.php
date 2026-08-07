@@ -1,8 +1,6 @@
 <?php
-$db ="saeedmir_blighted4851"; //saeedmir_blighted4851
-$user ="saeedmir_ranked0463"; //saeedmir_ranked0463
-$pass="Gm7Jf1YR!wEI^Fr%OG^^!uXcMV@RfJid"; //Gm7Jf1YR!wEI^Fr%OG^^!uXcMV@RfJid
-$base ="https://saeedmirzaei.ir/account"; // https://saeedmirzaei.ir/account
+require_once __DIR__ . '/database.php';
+$base ="http://localhost/account"; // https://saeedmirzaei.ir/account
 try {
     $conn =  new PDO("mysql:host=localhost;dbname=$db", $user, $pass , array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8") );
 }catch(PDOException $e) {

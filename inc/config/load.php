@@ -15,25 +15,37 @@ function sumarr($s){
 	 $sum = array_map(function ($h_id) { return array_sum($h_id); }, $total);
 	 return $sum[$s];
 }
-function sums($vale, $st){
-    $vale = intval($vale);
-    $st = (int)$st;
-    global $conn;
-    if(!empty($vale)){
-        if($st ==1){
-            $sql = "SELECT sum(IF(`hesab_bed`=$vale, `price`, 0)) AS `final` FROM `ruznameh` ";
-        }else{
+function sums($vale, $st)
+{
+	global $conn;
 
-            $sql = "SELECT sum(IF(`hesab_bes`=$vale, `price`, 0)) AS `final` FROM `ruznameh` ";
-        }
-        $stm = $conn->prepare($sql);
-        $stm->execute();
-        $stm->setFetchMode(PDO::FETCH_ASSOC);
-        $row = $stm->fetch();
-        return $row["final"];
-    }else{
-        return false;
-    }
+	$vale = intval($vale);
+	$st   = (int)$st;
+
+	if (empty($vale)) {
+		return false;
+	}
+
+	if ($st === 1) {
+		$sql = "
+            SELECT SUM(IF(`hesab_bed` = :hesab, `price`, 0)) AS `final`
+            FROM `ruznameh`
+        ";
+	} else {
+		$sql = "
+            SELECT SUM(IF(`hesab_bes` = :hesab, `price`, 0)) AS `final`
+            FROM `ruznameh`
+        ";
+	}
+
+	$stm = $conn->prepare($sql);
+	$stm->execute([
+		':hesab' => $vale
+	]);
+
+	$row = $stm->fetch(PDO::FETCH_ASSOC);
+
+	return $row['final'];
 }
 function sums_hesab($vale, $st){
     $vale = intval($vale);
