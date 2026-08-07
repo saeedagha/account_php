@@ -339,21 +339,71 @@ function sum_kol($value)
 
     return $aru;
 }
-function sum_kk($value){
-    $childs = get_sum_kol_page($value);
-    $aru = array();
-    $total_bes = 0;
-    $total_bed = 0;
-    foreach ($childs as $k=>$v) {
-        $total_bes = sums($v, 0);
-        $total_bed = sums($v, 1);
-        $munde = $total_bes - $total_bed;
-        $aru[$value]['bestankar'] = $total_bes;
-        $aru[$value]['bedehkar'] = $total_bed;
-        $aru[$value]['munde'] =$munde;
+function sum_kk($value)
+{
+    global $conn;
 
+    $childs = get_sum_kol_page($value);
+    $accountIds = array();
+
+    foreach ($childs as $kolId => $accounts) {
+        if (!is_array($accounts)) {
+            continue;
+        }
+
+        foreach ($accounts as $accountId => $name) {
+            $accountIds[] = (int) $accountId;
+        }
     }
-    return $aru;
+
+    $accountIds = array_values(array_unique($accountIds));
+
+    if (empty($accountIds)) {
+        return array();
+    }
+
+    $placeholders = implode(
+        ',',
+        array_fill(0, count($accountIds), '?')
+    );
+
+    /*
+     * Bedehkar
+     */
+    $sqlBed = "
+        SELECT SUM(`price`) AS `total`
+        FROM `ruznameh`
+        WHERE `hesab_bed` IN ($placeholders)
+    ";
+
+    $stmtBed = $conn->prepare($sqlBed);
+    $stmtBed->execute($accountIds);
+
+    $rowBed = $stmtBed->fetch(PDO::FETCH_ASSOC);
+    $totalBed = $rowBed['total'] ?? 0;
+
+    /*
+     * Bestankar
+     */
+    $sqlBes = "
+        SELECT SUM(`price`) AS `total`
+        FROM `ruznameh`
+        WHERE `hesab_bes` IN ($placeholders)
+    ";
+
+    $stmtBes = $conn->prepare($sqlBes);
+    $stmtBes->execute($accountIds);
+
+    $rowBes = $stmtBes->fetch(PDO::FETCH_ASSOC);
+    $totalBes = $rowBes['total'] ?? 0;
+
+    return array(
+        $value => array(
+            'bestankar' => $totalBes,
+            'bedehkar'  => $totalBed,
+            'munde'     => $totalBes - $totalBed
+        )
+    );
 }
 function get_sum_kol_page($val) {
     global $conn;
@@ -408,39 +458,73 @@ function display_hesab($id){
     }
 
 }
-function sub_sandugh(){
+function sub_sandugh()
+{
     global $conn;
+
     $val = SANDUGH_ID;
+
     try {
-        $sql = "SELECT * FROM `hesabha` where `kol_id` =$val and `moein_id` is NULL and `tafsili_id` is NULL";
+        // Get direct accounts under صندوق
+        $sql = "
+            SELECT `id`, `h_name`
+            FROM `hesabha`
+            WHERE `kol_id` = :kol_id
+              AND `moein_id` IS NULL
+              AND `tafsili_id` IS NULL
+        ";
+
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $ary= array();
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $stmt->execute([
+            ':kol_id' => $val
+        ]);
 
-            if(null_moein($row['id'])){ // Check moein_id Null
-                $ary[$row['id']] = $row['h_name'];
-            }else{ //select row has row_id as moein_id
-                $sc = $row['id'];
-                $sql2 = "SELECT * FROM `hesabha` where `moein_id` =$sc";
-                $stmt2 = $conn->prepare($sql2);
-                $stmt2->execute();
-                while ($row2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
-                    $ary[$row2['moein_id']][$row2['id']] = $row2['h_name'];
-                }
+        $parents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        if (empty($parents)) {
+            return array();
+        }
+
+        $parentIds = array_column($parents, 'id');
+
+        // Get all Moein children in one query
+        $placeholders = implode(
+            ',',
+            array_fill(0, count($parentIds), '?')
+        );
+
+        $sqlChildren = "
+            SELECT `moein_id`, `id`, `h_name`
+            FROM `hesabha`
+            WHERE `moein_id` IN ($placeholders)
+        ";
+
+        $stmtChildren = $conn->prepare($sqlChildren);
+        $stmtChildren->execute($parentIds);
+
+        $children = array();
+
+        while ($row = $stmtChildren->fetch(PDO::FETCH_ASSOC)) {
+            $children[$row['moein_id']][$row['id']] = $row['h_name'];
+        }
+
+        $ary = array();
+
+        foreach ($parents as $row) {
+            $parentId = $row['id'];
+
+            if (isset($children[$parentId])) {
+                $ary[$parentId] = $children[$parentId];
+            } else {
+                $ary[$parentId] = $row['h_name'];
             }
-
         }
 
         return $ary;
 
     } catch (Exception $e) {
-
         echo $e->getMessage();
-
     }
-
 }
 function sub_ashkhas(){
     global $conn;
@@ -462,58 +546,73 @@ function sub_ashkhas(){
 
     }
 }
-function sub_income(){
+function sub_income()
+{
     global $conn;
+
     $val = DARAMAD;
+
     try {
-        $sql = "SELECT * FROM `hesabha` where `kol_id` =$val and `moein_id` is NULL and `tafsili_id` is NULL";
+        // Get direct accounts under درآمد
+        $sql = "
+            SELECT `id`, `h_name`
+            FROM `hesabha`
+            WHERE `kol_id` = :kol_id
+              AND `moein_id` IS NULL
+              AND `tafsili_id` IS NULL
+        ";
+
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $ary= array();
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $stmt->execute([
+            ':kol_id' => $val
+        ]);
 
-            if(null_moein($row['id'])){ // Check moein_id Null
-                $ary[$row['id']] = $row['h_name'];
-            }else{ //select row has row_id as moein_id
-                $sc = $row['id'];
-                $sql2 = "SELECT * FROM `hesabha` where `moein_id` =$sc";
-                $stmt2 = $conn->prepare($sql2);
-                $stmt2->execute();
-                while ($row2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
-                    $ary[$row2['moein_id']][$row2['id']] = $row2['h_name'];
-                }
+        $parents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        if (empty($parents)) {
+            return array();
+        }
+
+        $parentIds = array_column($parents, 'id');
+
+        // Get all Moein children in one query
+        $placeholders = implode(
+            ',',
+            array_fill(0, count($parentIds), '?')
+        );
+
+        $sqlChildren = "
+            SELECT `moein_id`, `id`, `h_name`
+            FROM `hesabha`
+            WHERE `moein_id` IN ($placeholders)
+        ";
+
+        $stmtChildren = $conn->prepare($sqlChildren);
+        $stmtChildren->execute($parentIds);
+
+        $children = array();
+
+        while ($row = $stmtChildren->fetch(PDO::FETCH_ASSOC)) {
+            $children[$row['moein_id']][$row['id']] = $row['h_name'];
+        }
+
+        $ary = array();
+
+        foreach ($parents as $row) {
+            $parentId = $row['id'];
+
+            if (isset($children[$parentId])) {
+                $ary[$parentId] = $children[$parentId];
+            } else {
+                $ary[$parentId] = $row['h_name'];
             }
-
         }
 
         return $ary;
 
     } catch (Exception $e) {
-
         echo $e->getMessage();
-
     }
-
-
-
-
-/*    try {
-        $sql = "SELECT * FROM `hesabha` where `kol_id` =$val and `moein_id` is NULL and `tafsili_id` is NULL";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $ary= array();
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $ary[$row['id']] = $row['h_name'];
-        }
-
-        return $ary;
-
-    } catch (Exception $e) {
-
-        echo $e->getMessage();
-
-    }*/
 }
 
 function sub_vam(){
@@ -837,58 +936,73 @@ function getSubhesabs($parent_id,  &$data) {
 
 }
 
-function list_sub_costs(){
+function list_sub_costs()
+{
     global $conn;
+
     $val = HAZINEH;
+
     try {
-        $sql = "SELECT * FROM `hesabha` where `kol_id` =$val and `moein_id` is NULL and `tafsili_id` is NULL";
+        // Get direct accounts under هزینه
+        $sql = "
+            SELECT `id`, `h_name`
+            FROM `hesabha`
+            WHERE `kol_id` = :kol_id
+              AND `moein_id` IS NULL
+              AND `tafsili_id` IS NULL
+        ";
+
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $ary= array();
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $stmt->execute([
+            ':kol_id' => $val
+        ]);
 
-            if(null_moein($row['id'])){ // Check moein_id Null
-                $ary[$row['id']] = $row['h_name'];
-            }else{ //select row has row_id as moein_id
-                $sc = $row['id'];
-                $sql2 = "SELECT * FROM `hesabha` where `moein_id` =$sc";
-                $stmt2 = $conn->prepare($sql2);
-                $stmt2->execute();
-                while ($row2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
-                    $ary[$row2['moein_id']][$row2['id']] = $row2['h_name'];
-                }
+        $parents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        if (empty($parents)) {
+            return array();
+        }
+
+        $parentIds = array_column($parents, 'id');
+
+        // Get all Moein children in one query
+        $placeholders = implode(
+            ',',
+            array_fill(0, count($parentIds), '?')
+        );
+
+        $sqlChildren = "
+            SELECT `moein_id`, `id`, `h_name`
+            FROM `hesabha`
+            WHERE `moein_id` IN ($placeholders)
+        ";
+
+        $stmtChildren = $conn->prepare($sqlChildren);
+        $stmtChildren->execute($parentIds);
+
+        $children = array();
+
+        while ($row = $stmtChildren->fetch(PDO::FETCH_ASSOC)) {
+            $children[$row['moein_id']][$row['id']] = $row['h_name'];
+        }
+
+        $ary = array();
+
+        foreach ($parents as $row) {
+            $parentId = $row['id'];
+
+            if (isset($children[$parentId])) {
+                $ary[$parentId] = $children[$parentId];
+            } else {
+                $ary[$parentId] = $row['h_name'];
             }
-
         }
 
         return $ary;
 
     } catch (Exception $e) {
-
         echo $e->getMessage();
-
     }
-
-    /*
-    global $conn;
-    $val = HAZINEH;
-    try {
-        $sql = "SELECT * FROM `hesabha` where `kol_id` =$val and`moein_id` is NULL and `tafsili_id` is NULL";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $ary= array();
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $ary[$row['id']] = $row['h_name'];
-        }
-
-        return $ary;
-
-    } catch (Exception $e) {
-
-        echo $e->getMessage();
-
-    }*/
 }
 function list_all_hesab($opt)
 {
