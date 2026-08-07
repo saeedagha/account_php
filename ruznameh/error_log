@@ -1,0 +1,2 @@
+[14-Oct-2025 08:12:45 UTC] PHP Parse error:  syntax error, unexpected '"', expecting '-' or identifier (T_STRING) or variable (T_VARIABLE) or number (T_NUM_STRING) in /home1/saeedmir/public_html/account/ruznameh/view.php on line 63
+[14-Oct-2025 08:24:25 UTC] PHP Parse error:  syntax error, unexpected 'col' (T_STRING) in /home1/saeedmir/public_html/account/ruznameh/view.php on line 81
