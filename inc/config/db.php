@@ -53,25 +53,44 @@ function exist_key_option($val) {
 
     }
 }
-function gethesabname($hesab){
+function gethesabname($vale)
+{
     global $conn;
 
-    try {
-        $sql = "SELECT `h_name` FROM `hesabha` WHERE `id` = :id LIMIT 1";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([':id' => $hesab]);
+    static $cache = array();
 
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $vale = (int) $vale;
 
-        if ($row === false) {
-            return null;
-        }
-
-        return $row['h_name'];
-
-    } catch (Exception $e) {
-        echo $e->getMessage();
+    if (empty($vale)) {
+        return false;
     }
+
+    if (array_key_exists($vale, $cache)) {
+        return $cache[$vale];
+    }
+
+    $sql = "
+        SELECT `h_name`
+        FROM `hesabha`
+        WHERE `id` = :id
+        LIMIT 1
+    ";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute([
+        ':id' => $vale
+    ]);
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+        $cache[$vale] = false;
+        return false;
+    }
+
+    $cache[$vale] = $row['h_name'];
+
+    return $cache[$vale];
 }
 function get_child_kol($val) {
     global $conn;
@@ -1006,80 +1025,238 @@ function list_sub_costs()
 }
 function list_all_hesab($opt)
 {
+    global $conn;
+
     $sandugh = sub_sandugh();
     $sub_ashkhas = sub_ashkhas();
     $sub_income = sub_income();
     $sub_vam = sub_vam();
     $sub_cost = list_sub_costs();
+
+    /*
+     * Collect parent account IDs that are used
+     * for optgroup labels / data-tokens.
+     */
+    $parentIds = array();
+
+    foreach (array($sandugh, $sub_income, $sub_cost) as $groups) {
+        foreach ($groups as $key => $value) {
+            if (is_array($value)) {
+                $parentIds[] = (int) $key;
+            }
+        }
+    }
+
+    $parentNames = array();
+
+    if (!empty($parentIds)) {
+        $parentIds = array_values(array_unique($parentIds));
+
+        $placeholders = implode(
+            ',',
+            array_fill(0, count($parentIds), '?')
+        );
+
+        $sql = "
+            SELECT `id`, `h_name`
+            FROM `hesabha`
+            WHERE `id` IN ($placeholders)
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($parentIds);
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $parentNames[(int) $row['id']] = $row['h_name'];
+        }
+    }
+
     echo '<optgroup label="صندوق">';
+
     foreach ($sandugh as $key => $value) {
+
         if (is_array($value)) {
-            echo '<optgroup label="' . gethesabname($key) . '">';
+
+            $parentName = $parentNames[(int) $key] ?? '';
+
+            echo '<optgroup label="' . $parentName . '">';
+
             foreach ($value as $keys => $values) {
-                $v=''; if($keys == $opt) {$v = ' selected';}
-                echo '<option value="' . $keys . '" data-tokens="' . gethesabname($key) . '" '.$v.' >' . $values . '</option>';
+                $v = '';
+
+                if ($keys == $opt) {
+                    $v = ' selected';
+                }
+
+                echo '<option value="' . $keys . '" data-tokens="' .
+                    $parentName . '" ' . $v . ' >' .
+                    $values .
+                    '</option>';
             }
+
             echo '</optgroup>';
+
         } else {
-         $v=''; if($key == $opt) {$v = ' selected';}
-            echo '<option value="' . $key . '"  '.$v.' >' . $value . '</option>';
+
+            $v = '';
+
+            if ($key == $opt) {
+                $v = ' selected';
+            }
+
+            echo '<option value="' . $key . '" ' . $v . ' >' .
+                $value .
+                '</option>';
         }
     }
+
     echo '</optgroup>';
+
+
     echo '<optgroup label="درآمد ها">';
+
     foreach ($sub_income as $key => $value) {
+
         if (is_array($value)) {
 
+            $parentName = $parentNames[(int) $key] ?? '';
+
             foreach ($value as $keys => $values) {
-                $v=''; if($keys == $opt) {$v = ' selected';}
-                echo '<option value="' . $keys . '" data-tokens="' . gethesabname($key) . '"  '.$v.'>' . $values . '</option>';
+
+                $v = '';
+
+                if ($keys == $opt) {
+                    $v = ' selected';
+                }
+
+                echo '<option value="' . $keys .
+                    '" data-tokens="' . $parentName .
+                    '" ' . $v . '>' .
+                    $values .
+                    '</option>';
             }
 
         } else {
-            $v=''; if($key == $opt) {$v = ' selected';}
-            echo '<option value="' . $key . '"  '.$v.'>' . $value . '</option>';
+
+            $v = '';
+
+            if ($key == $opt) {
+                $v = ' selected';
+            }
+
+            echo '<option value="' . $key .
+                '" ' . $v . '>' .
+                $value .
+                '</option>';
         }
     }
+
     echo '</optgroup>';
+
+
     echo '<optgroup label="اشخاص">';
+
     foreach ($sub_ashkhas as $key => $value) {
 
         if (is_array($value)) {
+
+            $parentName = $parentNames[(int) $key] ?? '';
+
             foreach ($value as $keys => $values) {
-                $v=''; if($keys == $opt) {$v = ' selected';}
-                echo '<option value="' . $keys . '" data-tokens="' . gethesabname($key) . '" '.$v.'>' . $values . '</option>';
+
+                $v = '';
+
+                if ($keys == $opt) {
+                    $v = ' selected';
+                }
+
+                echo '<option value="' . $keys .
+                    '" data-tokens="' . $parentName .
+                    '" ' . $v . '>' .
+                    $values .
+                    '</option>';
             }
 
         } else {
-            $v=''; if($key == $opt) {$v = ' selected';}
-            echo '<option value="' . $key . '" '.$v.'>' . $value . '</option>';
-        }
 
+            $v = '';
+
+            if ($key == $opt) {
+                $v = ' selected';
+            }
+
+            echo '<option value="' . $key .
+                '" ' . $v . '>' .
+                $value .
+                '</option>';
+        }
     }
+
     echo '</optgroup>';
+
+
     echo '<optgroup label="وام ها">';
+
     foreach ($sub_vam as $key => $value) {
-        $v=''; if($key == $opt) {$v = ' selected';}
-        echo '<option value="' . $key . '" '.$v.'>' . $value . '</option>';
+
+        $v = '';
+
+        if ($key == $opt) {
+            $v = ' selected';
+        }
+
+        echo '<option value="' . $key .
+            '" ' . $v . '>' .
+            $value .
+            '</option>';
     }
+
     echo '</optgroup>';
+
+
     echo '<optgroup label="هزینه ها">';
+
     foreach ($sub_cost as $key => $value) {
+
         if (is_array($value)) {
-            echo '<optgroup label="' . gethesabname($key) . '">';
+
+            $parentName = $parentNames[(int) $key] ?? '';
+
+            echo '<optgroup label="' . $parentName . '">';
+
             foreach ($value as $keys => $values) {
-                $v=''; if($keys == $opt) {$v = ' selected';}
-                echo '<option value="' . $keys . '" data-tokens="' . gethesabname($key) . '" '.$v.'>' . $values . '</option>';
+
+                $v = '';
+
+                if ($keys == $opt) {
+                    $v = ' selected';
+                }
+
+                echo '<option value="' . $keys .
+                    '" data-tokens="' . $parentName .
+                    '" ' . $v . '>' .
+                    $values .
+                    '</option>';
             }
+
             echo '</optgroup>';
+
         } else {
-            $v=''; if($key == $opt) {$v = ' selected';}
-            echo '<option value="' . $key . '" '.$v.'>' . $value . '</option>';
+
+            $v = '';
+
+            if ($key == $opt) {
+                $v = ' selected';
+            }
+
+            echo '<option value="' . $key .
+                '" ' . $v . '>' .
+                $value .
+                '</option>';
         }
     }
+
     echo '</optgroup>';
-
-
 }
 function get_detail_hesab($val){
     global $conn;
