@@ -92,13 +92,22 @@ function gethesabname($vale)
 
     return $cache[$vale];
 }
-function get_child_kol($val) {
+function get_child_kol($val)
+{
     global $conn;
 
+    $val = (int) $val;
+
+    if ($val <= 0) {
+        return array();
+    }
+
     try {
-        $sql = "SELECT `id`, `kol_id`, `h_name`
-                FROM `hesabha`
-                WHERE `kol_id` = :kol_id";
+        $sql = "
+            SELECT `id`, `h_name`
+            FROM `hesabha`
+            WHERE `kol_id` = :kol_id
+        ";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute([
@@ -108,12 +117,7 @@ function get_child_kol($val) {
         $ar = array();
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-            if ($row['h_name']) {
-                $ar[$row['id']] = $row['h_name'];
-            } elseif ($row['kol_id']) {
-                $ar[$row['id']] = gethesabname($row['kol_id']);
-            }
+            $ar[$row['id']] = $row['h_name'];
         }
 
         return $ar;
@@ -122,13 +126,22 @@ function get_child_kol($val) {
         echo $e->getMessage();
     }
 }
-function get_child_nll($val) {
+function get_child_nll($val)
+{
     global $conn;
 
+    $val = (int) $val;
+
+    if ($val <= 0) {
+        return array();
+    }
+
     try {
-        $sql = "SELECT `id`, `kol_id`, `h_name`
-                FROM `hesabha`
-                WHERE `kol_id` = :kol_id";
+        $sql = "
+            SELECT `id`, `h_name`
+            FROM `hesabha`
+            WHERE `kol_id` = :kol_id
+        ";
 
         $stmt = $conn->prepare($sql);
         $stmt->execute([
@@ -138,12 +151,7 @@ function get_child_nll($val) {
         $ar = array();
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-            if ($row['h_name']) {
-                $ar[$row['id']] = $row['h_name'];
-            } elseif ($row['kol_id']) {
-                $ar[$row['id']] = gethesabname($row['kol_id']);
-            }
+            $ar[$row['id']] = $row['h_name'];
         }
 
         return $ar;
@@ -261,7 +269,7 @@ function sum_kol($value)
     global $conn;
 
     $child = get_child_kol($value);
-    $childa = get_child_nll($value);
+    $childa = $child;
 
     $aru = array();
 
@@ -424,25 +432,43 @@ function sum_kk($value)
         )
     );
 }
-function get_sum_kol_page($val) {
+function get_sum_kol_page($val)
+{
     global $conn;
+
+    $val = (int) $val;
+
+    if ($val <= 0) {
+        return array();
+    }
+
     try {
-        $sql = "SELECT * FROM `hesabha` where `kol_id` =$val and  `moein_id` is  NULL";
+        $sql = "
+            SELECT `id`, `kol_id`, `h_name`
+            FROM `hesabha`
+            WHERE `kol_id` = :kol_id
+              AND `moein_id` IS NULL
+        ";
+
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $ar=array();
+
+        $stmt->execute([
+            ':kol_id' => $val
+        ]);
+
+        $ar = array();
+
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            if($row['kol_id']){
-                $ar[$row['kol_id']][$row['id']] = gethesabname($row['id']);
-                //array_push($ar[$row['id']],gethesabname($row['kol_id']));
+
+            if (!empty($row['kol_id'])) {
+                $ar[$row['kol_id']][$row['id']] = $row['h_name'];
             }
         }
+
         return $ar;
 
     } catch (Exception $e) {
-
         echo $e->getMessage();
-
     }
 }
 function date_sep($val1) {
@@ -693,44 +719,64 @@ function sub_cost(){
 
     }
 }
-function null_moein($id){
+function null_moein($id)
+{
     global $conn;
-    try {
-        $sql = "SELECT * FROM `hesabha`  where `moein_id` =$id ";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if($row) {
-            return false;
-        }else{
-            return true;
-        }
 
+    $id = (int) $id;
+
+    if ($id <= 0) {
+        return true;
+    }
+
+    try {
+        $sql = "
+            SELECT `id`
+            FROM `hesabha`
+            WHERE `moein_id` = :moein_id
+            LIMIT 1
+        ";
+
+        $stmt = $conn->prepare($sql);
+
+        $stmt->execute([
+            ':moein_id' => $id
+        ]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) === false;
 
     } catch (Exception $e) {
-
         echo $e->getMessage();
-
     }
 }
-function null_tafsili($id){
+function null_tafsili($id)
+{
     global $conn;
-    try {
-        $sql = "SELECT * FROM `hesabha`  where `tafsili_id` =$id ";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if($row) {
-            return false;
-        }else{
-            return true;
-        }
 
+    $id = (int) $id;
+
+    if ($id <= 0) {
+        return true;
+    }
+
+    try {
+        $sql = "
+            SELECT `id`
+            FROM `hesabha`
+            WHERE `tafsili_id` = :tafsili_id
+            LIMIT 1
+        ";
+
+        $stmt = $conn->prepare($sql);
+
+        $stmt->execute([
+            ':tafsili_id' => $id
+        ]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) === false;
 
     } catch (Exception $e) {
-
         echo $e->getMessage();
-
     }
 }
 function list_kol(){
@@ -1421,32 +1467,46 @@ function tafsili_parent(){
 
     }
 }
-function sum_period($kol_id,$time_s,$time_e) {
+function sum_period($kol_id, $time_s, $time_e)
+{
     global $conn;
-    if($kol_id==2) {
-        $hesab_type = "hesab_bes";
-    }else {
-        $hesab_type = "hesab_bed";
+
+    $kol_id = (int) $kol_id;
+    $time_s = (int) $time_s;
+    $time_e = (int) $time_e;
+
+    if ($kol_id == 2) {
+        $hesab_type = 'hesab_bes';
+    } else {
+        $hesab_type = 'hesab_bed';
     }
-    try{
-        $q = " AND date BETWEEN $time_s And $time_e  ";
-        $sql = "SELECT ruznameh.date,ruznameh.hesab_bed,ruznameh.hesab_bes, hesabha.* , sum(ruznameh.price)as jame FROM `ruznameh` LEFT JOIN hesabha on $hesab_type=hesabha.id where kol_id=$kol_id $q GROUP by $hesab_type ORDER BY `hesabha`.`moein_id` ASC ";
+
+    try {
+
+        $sql = "
+            SELECT COALESCE(SUM(ruznameh.price), 0) AS jame
+            FROM `ruznameh`
+            INNER JOIN `hesabha`
+                ON ruznameh.`$hesab_type` = hesabha.`id`
+            WHERE hesabha.`kol_id` = :kol_id
+              AND ruznameh.`date` BETWEEN :time_s AND :time_e
+        ";
+
         $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $row4 = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $glk=0;
-        foreach ($row4 as $gb) {
-            $glk +=$gb["jame"];
-        }
-        return $glk;
 
+        $stmt->execute([
+            ':kol_id' => $kol_id,
+            ':time_s' => $time_s,
+            ':time_e' => $time_e
+        ]);
 
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row['jame'] ?? 0;
 
     } catch (Exception $e) {
-    echo $e->getMessage();
-}
-
-
+        echo $e->getMessage();
+    }
 }
 function get_description_last_vam($val) {
     global $conn;
