@@ -68,3 +68,58 @@ function get_document_template($id)
         return false;
     }
 }
+function get_all_hesab_options()
+{
+    global $conn;
+
+    try {
+        $sql = "
+            SELECT `id`, `h_name`, `kol_id`, `moein_id`, `tafsili_id`
+            FROM `hesabha`
+            WHERE `selectable` = 1
+            ORDER BY `id` ASC
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+
+        $accounts = array();
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $accounts[$row['id']] = $row;
+        }
+
+        return $accounts;
+
+    } catch (Exception $e) {
+        return array();
+    }
+}
+function get_document_template_accounts()
+{
+    global $conn;
+
+    try {
+
+        $sql = "
+            SELECT
+                `id`,
+                `h_name`,
+                `kol_id`,
+                `moein_id`,
+                `tafsili_id`,
+                `selectable`
+            FROM `hesabha`
+            WHERE `selectable` = 1
+            ORDER BY `id` ASC
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (Exception $e) {
+        return array();
+    }
+}

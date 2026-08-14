@@ -3,6 +3,7 @@ $titlepage = "تنظیمات";
 require_once 'inc/config/autoload.php';
 require(get_path('header.php'));
 ob_start();
+
 $idu = (int)addslashes(htmlentities($_SESSION['lgn']));
 if (!empty($idu) && isset($idu)) {
     $sql = "SELECT * FROM ";
@@ -12,10 +13,78 @@ if (!empty($idu) && isset($idu)) {
     $stm->execute();
     $row = $stm->fetch(PDO::FETCH_ASSOC);
 }
+if (isset($_POST['save_document_template'])) {
+
+    $name = trim($_POST['template_name'] ?? '');
+    $operationType = trim($_POST['template_operation_type'] ?? '');
+    $hesabBed = (int)($_POST['template_hesab_bed'] ?? 0);
+    $hesabBes = (int)($_POST['template_hesab_bes'] ?? 0);
+    $sharh = trim($_POST['template_sharh'] ?? '');
+
+    $allowedOperationTypes = array(
+        'cost',
+        'income',
+        'transfer'
+    );
+
+    if (
+        $name === '' ||
+        !in_array($operationType, $allowedOperationTypes, true) ||
+        $hesabBed <= 0 ||
+        $hesabBes <= 0
+    ) {
+        echo '<div class="alert alert-danger">
+                اطلاعات الگو کامل نیست.
+              </div>';
+    } else {
+
+        try {
+
+            $sql = "
+                INSERT INTO `document_templates`
+                (
+                    `name`,
+                    `operation_type`,
+                    `hesab_bed`,
+                    `hesab_bes`,
+                    `sharh`,
+                    `active`
+                )
+                VALUES
+                (
+                    :name,
+                    :operation_type,
+                    :hesab_bed,
+                    :hesab_bes,
+                    :sharh,
+                    1
+                )
+            ";
+
+            $stmt = $conn->prepare($sql);
+
+            $stmt->execute([
+                ':name' => $name,
+                ':operation_type' => $operationType,
+                ':hesab_bed' => $hesabBed,
+                ':hesab_bes' => $hesabBes,
+                ':sharh' => $sharh
+            ]);
+
+            header('Location: setting.php');
+            exit;
+
+        } catch (Exception $e) {
+
+            echo '<div class="alert alert-danger">
+                    خطا در ثبت الگو.
+                  </div>';
+        }
+    }
+}
 // START Profile Settings
 if (isset($_POST['profile_settings'])) {
     $error = array();
-
     $id = (int)addslashes(htmlentities($_SESSION['lgn']));
     if ($id == 0) {
         $id = NULL;
@@ -39,8 +108,6 @@ if (isset($_POST['profile_settings'])) {
         $error['color'] = 'pink';
         $error['message'] = 'مشکلی در ویرایش حساب کاربری به وجود آمد لطفا صفحه را مجدد بارگزاری کنید و یا در ورود مقادیر دقت نمایید';
     }
-
-
 }
 // END Profile Settings
 // START Change Password settings
@@ -65,14 +132,10 @@ if (isset($_POST['sub_pass'])) {
             $error['color'] = 'pink';
             $error['message'] = 'مشکلی در ویرایش رمز به وجود آمد لطفا صفحه را مجدد بارگزاری کنید و یا در ورود مقادیر دقت نمایید';
         }
-
-
     } else {
         $error['color'] = 'pink';
         $error['message'] = 'مشکلی در ویرایش رمز به وجود آمد لطفا صفحه را مجدد بارگزاری کنید و یا در ورود مقادیر دقت نمایید';
     }
-
-
 }
 // END Change Password settings
 // START System Settings
@@ -122,10 +185,6 @@ if (isset($_POST['save_sys'])) {
     $araye["col_bx7"] = $col_bx7;
     $col_bx8 = addslashes(htmlentities($_POST["col_bx8"]));
     $araye["col_bx8"] = $col_bx8;
-
-
-
-
     foreach ($araye as $key => $value) {
         if ($rw = exist_key_option($key)) {
             $rw = (int)$rw;
@@ -137,7 +196,6 @@ if (isset($_POST['save_sys'])) {
             ))) {
                 $error['color'] = 'teal';
                 $error['message'] = 'تنظیمات به روز رسانی شد ';
-
             }
         } else {
             $sql = "INSERT INTO `tbl_opt` (`klid`, `val`) VALUES (:klid, :val);";
@@ -149,15 +207,11 @@ if (isset($_POST['save_sys'])) {
                 $error['color'] = 'teal';
                 $error['message'] = 'تنظیمات به روز رسانی شد ';
             }
-
-
         }
     }
 }
 // END System Settings
-
 // Setting Option
-
 //$opt = setting_tbl();
 $defaultOptions = array("
 col_tsk" => "purple",
@@ -182,7 +236,6 @@ col_tsk" => "purple",
     "col_bx6" => "0",
     "col_bx7" => "0",
     "col_bx8" => "0",
-
 );
 $customOptions =setting_tbl();
 $opt = array_merge($defaultOptions, $customOptions);
@@ -207,39 +260,271 @@ $colors=array(
     "grey",
     "blue-grey",
     "black"
-
 );
+$document_templates = array();
+try {
+    $sql = "
+        SELECT
+            id,
+            name,
+            operation_type,
+            hesab_bed,
+            hesab_bes,
+            sharh,
+            active
+        FROM `document_templates`
+        ORDER BY id DESC
+    ";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $document_templates = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $document_templates = array();
+}
+$document_template_accounts = get_document_template_accounts();
 ?>
-
     <section class="content">
         <div class="container-fluid">
             <div class="row clearfix">
-
                 <div class="col-xs-12">
                     <?php if (isset($error) && !empty($error)) {
                         echo ' <div class="alert bg-' . $error['color'] . ' alert-dismissible" role="alert">
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
                   ' . $error['message'] . '
                     </div>';
-
                     } ?>
                     <div class="card">
                         <div class="body">
                             <div>
                                 <ul class="nav nav-tabs" role="tablist">
-                                    <li role="presentation " class="active"><a href="#system_settings"
+                                    <li role="presentation" class="active">
+                                        <a href="#document_templates"
+                                           aria-controls="settings"
+                                           role="tab"
+                                           data-toggle="tab">
+                                            الگوهای ثبت سند
+                                        </a>
+                                    </li>
+                                    <li role="presentation "><a href="#system_settings"
                                                                                aria-controls="settings" role="tab"
                                                                                data-toggle="tab">تنظیمات سیستم</a></li>
                                     <li role="presentation "><a href="#profile_settings" aria-controls="settings"
                                                                 role="tab" data-toggle="tab">تنظیمات کاربری</a></li>
-
                                     <li role="presentation"><a href="#change_password_settings" aria-controls="settings"
                                                                role="tab" data-toggle="tab">تغییر رمز</a></li>
-
                                 </ul>
-
                                 <div class="tab-content">
-                                    <div role="tabpanel" class="tab-pane fade in active" id="system_settings">
+                                    <div role="tabpanel"
+                                         class="tab-pane fade in active"
+                                         id="document_templates">
+                                        <div class="row clearfix">
+                                            <div class="col-xs-12">
+                                                <div class="card-inside-title">
+                                                    <h3 style="margin-bottom: 25px;">
+                                                        الگوهای ثبت سند
+                                                    </h3>
+                                                </div>
+                                                <div class="text-left" style="margin-bottom: 15px;">
+                                                    <button
+                                                            type="button"
+                                                            class="btn btn-primary waves-effect"
+                                                            data-toggle="modal"
+                                                            data-target="#document_template_modal">
+                                                        <i class="material-icons">add</i>
+                                                        <span>افزودن الگو</span>
+                                                    </button>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-striped table-hover">
+                                                        <thead>
+                                                        <tr>
+                                                            <th>نام الگو</th>
+                                                            <th>نوع عملیات</th>
+                                                            <th>حساب بدهکار</th>
+                                                            <th>حساب بستانکار</th>
+                                                            <th>شرح</th>
+                                                            <th>وضعیت</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <?php if (!empty($document_templates)) { ?>
+                                                            <?php foreach ($document_templates as $template) { ?>
+                                                                <tr>
+                                                                    <td>
+                                                                        <?php echo htmlspecialchars(
+                                                                            $template['name'],
+                                                                            ENT_QUOTES,
+                                                                            'UTF-8'
+                                                                        ); ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php
+                                                                        switch ($template['operation_type']) {
+                                                                            case 'cost':
+                                                                                echo 'هزینه';
+                                                                                break;
+                                                                            case 'income':
+                                                                                echo 'درآمد';
+                                                                                break;
+                                                                            case 'transfer':
+                                                                                echo 'انتقال وجه';
+                                                                                break;
+                                                                            default:
+                                                                                echo $template['operation_type'];
+                                                                        }
+                                                                        ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php echo (int)$template['hesab_bed']; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php echo (int)$template['hesab_bes']; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php echo htmlspecialchars(
+                                                                            $template['sharh'] ?? '',
+                                                                            ENT_QUOTES,
+                                                                            'UTF-8'
+                                                                        ); ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php if ((int)$template['active'] === 1) { ?>
+                                                                            <span class="label bg-teal">
+                                            فعال
+                                        </span>
+                                                                        <?php } else { ?>
+                                                                            <span class="label bg-grey">
+                                            غیرفعال
+                                        </span>
+                                                                        <?php } ?>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php } ?>
+                                                        <?php } else { ?>
+                                                            <tr>
+                                                                <td colspan="6" class="text-center">
+                                                                    الگویی ثبت نشده است.
+                                                                </td>
+                                                            </tr>
+                                                        <?php } ?>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="modal fade"
+                                                     id="document_template_modal"
+                                                     tabindex="-1"
+                                                     role="dialog"
+                                                     aria-labelledby="document_template_modal_label">
+                                                    <div class="modal-dialog" role="document">
+                                                        <div class="modal-content">
+                                                            <form method="post">
+                                                                <div class="modal-header">
+                                                                    <button
+                                                                            type="button"
+                                                                            class="close"
+                                                                            data-dismiss="modal"
+                                                                            aria-label="Close">
+                                                                        <span aria-hidden="true">&times;</span>
+                                                                    </button>
+                                                                    <h4 class="modal-title" id="document_template_modal_label">
+                                                                        افزودن الگوی ثبت سند
+                                                                    </h4>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <div class="form-group">
+                                                                        <label>نام الگو</label>
+                                                                        <input
+                                                                                type="text"
+                                                                                name="template_name"
+                                                                                class="form-control"
+                                                                                required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label>نوع عملیات</label>
+                                                                        <select
+                                                                                name="template_operation_type"
+                                                                                class="form-control"
+                                                                                required>
+                                                                            <option value="cost">هزینه</option>
+                                                                            <option value="income">درآمد</option>
+                                                                            <option value="transfer">انتقال وجه</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label>حساب بدهکار</label>
+                                                                        <select
+                                                                                name="template_hesab_bed"
+                                                                                class="form-control show-tick"
+                                                                                data-live-search="true"
+                                                                                required>
+                                                                            <option value="">انتخاب حساب</option>
+                                                                            <?php foreach ($document_template_accounts as $account) { ?>
+
+                                                                                <option value="<?php echo (int)$account['id']; ?>">
+                                                                                    <?php echo htmlspecialchars(
+                                                                                        $account['h_name'],
+                                                                                        ENT_QUOTES,
+                                                                                        'UTF-8'
+                                                                                    ); ?>
+                                                                                </option>
+
+                                                                            <?php } ?>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label>حساب بستانکار</label>
+                                                                        <select
+                                                                                name="template_hesab_bes"
+                                                                                class="form-control show-tick"
+                                                                                data-live-search="true"
+                                                                                required>
+
+                                                                            <option value="">انتخاب حساب</option>
+
+                                                                            <?php foreach ($document_template_accounts as $account) { ?>
+
+                                                                                <option value="<?php echo (int)$account['id']; ?>">
+                                                                                    <?php echo htmlspecialchars(
+                                                                                        $account['h_name'],
+                                                                                        ENT_QUOTES,
+                                                                                        'UTF-8'
+                                                                                    ); ?>
+                                                                                </option>
+
+                                                                            <?php } ?>
+
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label>شرح</label>
+                                                                        <textarea
+                                                                                name="template_sharh"
+                                                                                class="form-control"
+                                                                                rows="3"></textarea>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button
+                                                                            type="submit"
+                                                                            name="save_document_template"
+                                                                            class="btn btn-primary waves-effect">
+                                                                        ذخیره
+                                                                    </button>
+                                                                    <button
+                                                                            type="button"
+                                                                            class="btn btn-default waves-effect"
+                                                                            data-dismiss="modal">
+                                                                        انصراف
+                                                                    </button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane fade in" id="system_settings">
                                         <form class="form-horizontal" action="" method="post">
                                             <div class="form-group">
                                                 <label for="username" class="col-sm-2 control-label">انتخاب رنگ
@@ -251,9 +536,7 @@ $colors=array(
                                                             <option value="" selected>--رنگ--</option>
                                                             <?php foreach ($colors as $color){ ?>
                                                             <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_tsk'] == $color) {echo 'selected';} ?>></option>
-
                                                            <?php } ?>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -261,12 +544,10 @@ $colors=array(
                                             <div class="setion_hd">
                                                 جهت عملکرد صحیح سیستم حساب پیشفرض را در قسمت زیر انتخاب نمایید
                                             </div>
-
                                             <div class="form-group">
                                                 <label for="sandugh_id" class="col-sm-2 control-label">حساب
                                                     صندوق</label>
                                                 <div class="col-sm-10">
-
                                                     <div class="form-line input-group">
                                                         <select class="form-control show-tick" id="sandugh_id"
                                                                 name="sandugh_id" data-live-search="true">
@@ -275,25 +556,19 @@ $colors=array(
                                                             <?php
                                                             $parent_kol = list_kol();
                                                             foreach ($parent_kol as $key => $value) { ?>
-
                                                                 <option value="<?php echo $key; ?>" <?php if ($opt['sandugh_id'] == $key) {
                                                                     echo ' selected';
                                                                 } ?>><?php echo $value; ?></option>
                                                             <?php }
                                                             ?>
-
                                                         </select>
                                                     </div>
-
                                                 </div>
                                             </div>
-
                                             <div class="form-group">
                                                 <label for="ashkhas_id" class="col-sm-2 control-label">حساب
                                                     اشخاص</label>
-
                                                 <div class="col-sm-10">
-
                                                     <div class="form-line input-group">
                                                         <select class="form-control show-tick" id="ashkhas_id"
                                                                 name="ashkhas_id" data-live-search="true">
@@ -301,49 +576,37 @@ $colors=array(
                                                             </option>
                                                             <?php
                                                             foreach ($parent_kol as $key => $value) { ?>
-
                                                                 <option value="<?php echo $key; ?>" <?php if ($opt['ashkhas_id'] == $key) {
                                                                     echo ' selected';
                                                                 } ?>><?php echo $value; ?></option>
                                                             <?php }
                                                             ?>
-
                                                         </select>
                                                     </div>
-
                                                 </div>
                                             </div>
-
                                             <div class="form-group">
                                                 <label for="income_id" class="col-sm-2 control-label">حساب درآمد</label>
                                                 <div class="col-sm-10">
-
                                                     <div class="form-line input-group">
                                                         <select class="form-control show-tick" id="income_id"
                                                                 name="income_id" data-live-search="true">
                                                             <option value="0" selected>--حساب درآمد را انتخاب نمایید--
                                                             </option>
                                                             <?php
-
                                                             foreach ($parent_kol as $key => $value) { ?>
-
                                                                 <option value="<?php echo $key; ?>" <?php if ($opt['income_id'] == $key) {
                                                                     echo ' selected';
                                                                 } ?>><?php echo $value; ?></option>
                                                             <?php }
                                                             ?>
-
                                                         </select>
                                                     </div>
-
                                                 </div>
                                             </div>
-
                                             <div class="form-group">
                                                 <label for="vam_id" class="col-sm-2 control-label"> حساب وام</label>
-
                                                 <div class="col-sm-10">
-
                                                     <div class="form-line input-group">
                                                         <select class="form-control show-tick" id="vam_id" name="vam_id"
                                                                 data-live-search="true">
@@ -351,44 +614,33 @@ $colors=array(
                                                                 نمایید--
                                                             </option>
                                                             <?php
-
                                                             foreach ($parent_kol as $key => $value) { ?>
-
                                                                 <option value="<?php echo $key; ?>" <?php if ($opt['vam_id'] == $key) {
                                                                     echo ' selected';
                                                                 } ?>><?php echo $value; ?></option>
                                                             <?php }
                                                             ?>
-
                                                         </select>
-
                                                     </div>
-
                                                 </div>
                                             </div>
-
                                             <div class="form-group">
                                                 <label for="cost_id" class="col-sm-2 control-label">حساب هزینه</label>
                                                 <div class="col-sm-10">
-
                                                     <div class="form-line input-group">
-
                                                         <select class="form-control show-tick" id="cost_id"
                                                                 name="cost_id" data-live-search="true">
                                                             <option value="0" selected>--حساب هزینه را انتخاب نمایید--
                                                             </option>
                                                             <?php
                                                             foreach ($parent_kol as $key => $value) { ?>
-
                                                                 <option value="<?php echo $key; ?>" <?php if ($opt['cost_id'] == $key) {
                                                                     echo ' selected';
                                                                 } ?>><?php echo $value; ?></option>
                                                             <?php }
                                                             ?>
-
                                                         </select>
                                                     </div>
-
                                                 </div>
                                             </div>
                                             <h2 class="card-inside-title" style="margin-bottom: 25px;">باکس اول</h2>
@@ -396,13 +648,11 @@ $colors=array(
                                                 <div class="col-md-6">
                                                     <b>انتخاب عنوان حساب</b>
                                                     <div class="form-line input-group" style="margin-top: 20px;">
-
                                                         <select class="form-control show-tick" id="bx1"
                                                                 name="bx1" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
                                                             </option>
                                                 <?php list_all_hesab($opt['bx1']); ?>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -415,31 +665,22 @@ $colors=array(
                                                                 <option value="">--رنگ--</option>
                                                                 <?php foreach ($colors as $color){ ?>
                                                                 <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx1'] == $color) {echo 'selected';} ?>></option>
-
                                                                 <?php } ?>
-
-
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-
-
                                             <h2 class="card-inside-title" style="margin-bottom: 25px;">باکس دوم</h2>
                                             <div class="row clearfix">
                                                 <div class="col-md-6">
                                                     <b>انتخاب عنوان حساب</b>
-
                                                     <div class="form-line input-group" style="margin-top: 20px;">
-
                                                         <select class="form-control show-tick" id="bx2"
                                                                 name="bx2" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
                                                             </option>
                                                             <?php list_all_hesab($opt['bx2']); ?>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -452,33 +693,22 @@ $colors=array(
                                                                 <option value="">--رنگ--</option>
                                                                 <?php foreach ($colors as $color){ ?>
                                                                     <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx2'] == $color) {echo 'selected';} ?>></option>
-
                                                                 <?php } ?>
-
-
-
-
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-
-
                                             <h2 class="card-inside-title" style="margin-bottom: 25px;">باکس سوم</h2>
                                             <div class="row clearfix">
                                                 <div class="col-md-6">
                                                     <b>انتخاب عنوان حساب</b>
-
                                                     <div class="form-line input-group" style="margin-top: 20px;">
-
                                                         <select class="form-control show-tick" id="bx3"
                                                                 name="bx3" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
                                                             </option>
                                                             <?php list_all_hesab($opt['bx3']); ?>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -491,32 +721,22 @@ $colors=array(
                                                                 <option value="">--رنگ--</option>
                                                                 <?php foreach ($colors as $color){ ?>
                                                                     <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx3'] == $color) {echo 'selected';} ?>></option>
-
                                                                 <?php } ?>
-
-
-
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-
-
                                             <h2 class="card-inside-title" style="margin-bottom: 25px;">باکس چهارم</h2>
                                             <div class="row clearfix">
                                                 <div class="col-md-6">
                                                     <b>انتخاب عنوان حساب</b>
-
                                                     <div class="form-line input-group" style="margin-top: 20px;">
-
                                                         <select class="form-control show-tick" id="bx4"
                                                                 name="bx4" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
                                                             </option>
                                                             <?php list_all_hesab($opt['bx4']); ?>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -529,33 +749,22 @@ $colors=array(
                                                                 <option value="">--رنگ--</option>
                                                                 <?php foreach ($colors as $color){ ?>
                                                                     <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx4'] == $color) {echo 'selected';} ?>></option>
-
                                                                 <?php } ?>
-
-
-
-
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-
-
                                             <h2 class="card-inside-title" style="margin-bottom: 25px;">باکس پنجم</h2>
                                             <div class="row clearfix">
                                                 <div class="col-md-6">
                                                     <b>انتخاب عنوان حساب</b>
-
                                                     <div class="form-line input-group" style="margin-top: 20px;">
-
                                                         <select class="form-control show-tick" id="bx5"
                                                                 name="bx5" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
                                                             </option>
                                                             <?php list_all_hesab($opt['bx5']); ?>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -568,12 +777,7 @@ $colors=array(
                                                                 <option value="">--رنگ--</option>
                                                                 <?php foreach ($colors as $color){ ?>
                                                                     <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx5'] == $color) {echo 'selected';} ?>></option>
-
                                                                 <?php } ?>
-
-
-
-
                                                             </select>
                                                         </div>
                                                     </div>
@@ -583,9 +787,7 @@ $colors=array(
                                             <div class="row clearfix">
                                                 <div class="col-md-6">
                                                     <b>انتخاب عنوان حساب</b>
-
                                                     <div class="form-line input-group" style="margin-top: 20px;">
-
                                                         <select class="form-control show-tick" id="bx6"
                                                                 name="bx6" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
@@ -603,12 +805,7 @@ $colors=array(
                                                                 <option value="">--رنگ--</option>
                                                                 <?php foreach ($colors as $color){ ?>
                                                                     <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx6'] == $color) {echo 'selected';} ?>></option>
-
                                                                 <?php } ?>
-
-
-
-
                                                             </select>
                                                         </div>
                                                     </div>
@@ -618,15 +815,12 @@ $colors=array(
                                             <div class="row clearfix">
                                                 <div class="col-md-6">
                                                     <b>انتخاب عنوان حساب</b>
-
                                                     <div class="form-line input-group" style="margin-top: 20px;">
-
                                                         <select class="form-control show-tick" id="bx7"
                                                                 name="bx7" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
                                                             </option>
                                                             <?php list_all_hesab($opt['bx7']); ?>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -639,10 +833,7 @@ $colors=array(
                                                                 <option value="">--رنگ--</option>
                                                                 <?php foreach ($colors as $color){ ?>
                                                                     <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx7'] == $color) {echo 'selected';} ?>></option>
-
                                                                 <?php } ?>
-
-
                                                             </select>
                                                         </div>
                                                     </div>
@@ -652,15 +843,12 @@ $colors=array(
                                             <div class="row clearfix">
                                                 <div class="col-md-6">
                                                     <b>انتخاب عنوان حساب</b>
-
                                                     <div class="form-line input-group" style="margin-top: 20px;">
-
                                                         <select class="form-control show-tick" id="bx8"
                                                                 name="bx8" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
                                                             </option>
                                                             <?php list_all_hesab($opt['bx8']); ?>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -679,10 +867,6 @@ $colors=array(
                                                     </div>
                                                 </div>
                                             </div>
-
-
-
-
                                             <div class="form-group">
                                                 <div class="col-sm-12">
                                                     <button type="submit" name="save_sys"
@@ -736,7 +920,6 @@ $colors=array(
                                                 </div>
                                             </div>
                                             <input type="hidden" name="prof_set" value="">
-
                                             <div class="form-group">
                                                 <div class="col-sm-12">
                                                     <button type="submit" name="profile_settings"
@@ -746,7 +929,6 @@ $colors=array(
                                             </div>
                                         </form>
                                     </div>
-
                                     <div role="tabpanel" class="tab-pane fade in" id="change_password_settings">
                                         <form class="form-horizontal" action="" method="post">
                                             <div class="form-group">
@@ -759,7 +941,6 @@ $colors=array(
                                                         <input type="password" class="form-control" id="oldpassword"
                                                                name="oldpassword" placeholder="رمز فعلی را وارد نمایید"
                                                                required>
-
                                                     </div>
                                                 </div>
                                             </div>
@@ -768,7 +949,6 @@ $colors=array(
                                                     <label for="newpassword" class="control-label">رمز جدید</label>&nbsp;&nbsp;
                                                     <span toggle="#newpassword" class="fa fa-fw fa-eye field-icon toggle-password" style="font-size: 15px;"></span>&nbsp;
                                                 </div>
-
                                                 <div class="col-sm-9">
                                                     <div class="form-line">
                                                         <input type="password" class="form-control" id="newpassword"
@@ -783,7 +963,6 @@ $colors=array(
                                                     رمز</label>&nbsp;&nbsp;
                                                 <span toggle="#newpasswordconfirm" class="fa fa-fw fa-eye field-icon toggle-password" style="font-size: 15px;"></span>&nbsp;
                                                 </div>
-
                                                 <div class="col-sm-9">
                                                     <div class="form-line">
                                                         <input type="password" class="form-control"
@@ -792,7 +971,6 @@ $colors=array(
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="form-group">
                                                 <div class="col-sm-offset-3 col-sm-9">
                                                     <button type="submit" name="sub_pass" class="btn btn-danger">
@@ -810,6 +988,4 @@ $colors=array(
             </div>
         </div>
     </section>
-
-
 <?php require(get_path('footer.php')); ?>

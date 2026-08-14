@@ -130,6 +130,36 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
 
 </style>
 <script>
+    $('#document_template_cost').on('change', function () {
+
+        var option = $(this).find('option:selected');
+
+        var hesabBed = option.data('hesab-bed');
+        var hesabBes = option.data('hesab-bes');
+        var sharh = option.data('sharh');
+
+        // بدون الگو
+        if (!this.value) {
+            return;
+        }
+
+        // حساب بدهکار
+        if (hesabBed) {
+            $('#cst4').val(hesabBed).trigger('change');
+        }
+
+        // حساب بستانکار
+        if (hesabBes) {
+            $('#hesab4').val(hesabBes).trigger('change');
+        }
+
+        // شرح
+        if (sharh) {
+            $('#sharh4').val(sharh);
+        }
+    });
+
+    
         $(document).ready(function () {
             $('.dashboard-stat-list').readall({
                 // Default values
