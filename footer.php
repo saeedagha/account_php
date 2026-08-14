@@ -1111,7 +1111,6 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
                           var result = jQuery.parseJSON(data);
                           if(result.res=="registered") {
                               //  $("input[type=text], textarea").val("");
-
                               swal("موفق", "تراکنش جدید ثبت شد", "success");
                               setTimeout(function(){
                                   location.reload();
