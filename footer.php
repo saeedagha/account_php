@@ -1447,6 +1447,116 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
 
       });
   </script>
+  <script>
+      $(function () {
+
+          $('#document_template_income').on('changed.bs.select', function () {
+
+              var $selected = $(this).find('option:selected');
+
+              if (!$(this).val()) {
+
+                  $('#hesab1')
+                      .val('0')
+                      .selectpicker('refresh');
+
+                  $('#cst1')
+                      .val('0')
+                      .selectpicker('refresh');
+
+                  $('#sharh1').val('');
+
+                  return;
+              }
+
+              /*
+               * در درآمد:
+               *
+               * بدهکار = صندوق
+               * بستانکار = درآمد
+               *
+               * بنابراین:
+               *
+               * hesab_bed -> cst1
+               * hesab_bes -> hesab1
+               */
+
+              var hesabBed = $selected.data('hesab-bed');
+              var hesabBes = $selected.data('hesab-bes');
+              var sharh = $selected.data('sharh') || '';
+
+              $('#cst1')
+                  .val(String(hesabBed))
+                  .selectpicker('refresh');
+
+              $('#hesab1')
+                  .val(String(hesabBes))
+                  .selectpicker('refresh');
+
+              $('#sharh1').val(sharh);
+          });
+
+      });
+  </script>
+  <script>
+      $(function () {
+
+          $('#document_template_transfer').on('changed.bs.select', function () {
+
+              var $selected = $(this).find('option:selected');
+
+              /*
+               * بدون الگو
+               */
+              if (!$(this).val()) {
+
+                  $('#hesab8')
+                      .val('0')
+                      .selectpicker('refresh');
+
+                  $('#cst8')
+                      .val('0')
+                      .selectpicker('refresh');
+
+                  $('#sharh8').val('');
+
+                  return;
+              }
+
+              var hesabBed = $selected.data('hesab-bed');
+              var hesabBes = $selected.data('hesab-bes');
+              var sharh = $selected.data('sharh') || '';
+
+              /*
+               * انتقال وجه:
+               *
+               * بدهکار = حساب مقصد
+               * بستانکار = حساب مبدا
+               *
+               * اما در فرم فعلی:
+               *
+               * #hesab8 = از حساب
+               * #cst8   = واریز به
+               *
+               * بنابراین:
+               *
+               * hesab_bed -> cst8
+               * hesab_bes -> hesab8
+               */
+
+              $('#cst8')
+                  .val(String(hesabBed))
+                  .selectpicker('refresh');
+
+              $('#hesab8')
+                  .val(String(hesabBes))
+                  .selectpicker('refresh');
+
+              $('#sharh8').val(sharh);
+          });
+
+      });
+  </script>
   </body>
 
 </html>

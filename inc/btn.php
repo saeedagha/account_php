@@ -5,6 +5,8 @@ $sub_income = sub_income();
 $sub_vam = sub_vam();
 $sub_cost = list_sub_costs();
 $cost_templates = get_document_templates('cost');
+$income_templates = get_document_templates('income');
+$transfer_templates = get_document_templates('transfer');
 $opt = setting_tbl();
 $arr =array();
 foreach ($opt as $key => $value) {
@@ -466,6 +468,45 @@ echo '</div>';
                 <button class="close pull-left" data-dismiss="modal">×</button>
             </div>
             <hr style="border-top: 1px solid #008477;"/>
+            <div class="modal-body" style="padding-bottom: 0;">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <p class="mg-b-10">الگوی ثبت سند</p>
+
+                        <select
+                                class="form-control show-tick"
+                                data-live-search="true"
+                                id="document_template_transfer">
+
+                            <option value="">-- بدون الگو --</option>
+
+                            <?php foreach ($transfer_templates as $template) { ?>
+
+                                <option
+                                        value="<?php echo (int)$template['id']; ?>"
+                                        data-hesab-bed="<?php echo (int)$template['hesab_bed']; ?>"
+                                        data-hesab-bes="<?php echo (int)$template['hesab_bes']; ?>"
+                                        data-sharh="<?php echo htmlspecialchars(
+                                            $template['sharh'] ?? '',
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ); ?>"
+                                >
+                                    <?php echo htmlspecialchars(
+                                        $template['name'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ); ?>
+                                </option>
+
+                            <?php } ?>
+
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border-top: 1px solid #008477;"/>
             <div class="modal-body">
 
 
@@ -574,7 +615,43 @@ echo '</div>';
             </div>
             <hr style="border-top: 1px solid #008477;"/>
             <div class="modal-body">
+                <div class="modal-body" style="padding-bottom: 0;">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <p class="mg-b-10">الگوی ثبت سند</p>
 
+                            <select
+                                    class="form-control show-tick"
+                                    data-live-search="true"
+                                    id="document_template_income">
+
+                                <option value="">-- بدون الگو --</option>
+
+                                <?php foreach ($income_templates as $template) { ?>
+
+                                    <option
+                                            value="<?php echo (int)$template['id']; ?>"
+                                            data-hesab-bed="<?php echo (int)$template['hesab_bed']; ?>"
+                                            data-hesab-bes="<?php echo (int)$template['hesab_bes']; ?>"
+                                            data-sharh="<?php echo htmlspecialchars(
+                                                $template['sharh'] ?? '',
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ); ?>"
+                                    >
+                                        <?php echo htmlspecialchars(
+                                            $template['name'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ); ?>
+                                    </option>
+
+                                <?php } ?>
+
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="row">
                     <div class="col-lg-6">
