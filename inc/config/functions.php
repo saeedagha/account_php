@@ -95,31 +95,21 @@ function get_all_hesab_options()
         return array();
     }
 }
-function get_document_template_accounts()
+function get_document_template_accounts($operationType, $side)
 {
-    global $conn;
+    $operationType = (string)$operationType;
+    $side = (string)$side;
 
-    try {
+    if ($operationType === 'cost') {
 
-        $sql = "
-            SELECT
-                `id`,
-                `h_name`,
-                `kol_id`,
-                `moein_id`,
-                `tafsili_id`,
-                `selectable`
-            FROM `hesabha`
-            WHERE `selectable` = 1
-            ORDER BY `id` ASC
-        ";
+        if ($side === 'bed') {
+            return list_sub_costs();
+        }
 
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    } catch (Exception $e) {
-        return array();
+        if ($side === 'bes') {
+            return sub_sandugh();
+        }
     }
+
+    return array();
 }
