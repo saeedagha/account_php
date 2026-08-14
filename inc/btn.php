@@ -1,4 +1,41 @@
 <?php
+/*
+ * ==============================
+ * الگوهای چندتراکنشی
+ * ==============================
+ */
+
+$multi_document_templates = array();
+
+try {
+
+    $stmt = $conn->prepare("
+        SELECT
+            dt.id,
+            dt.name,
+            dt.operation_type
+        FROM document_templates dt
+        WHERE dt.active = 1
+          AND EXISTS (
+              SELECT 1
+              FROM document_template_items dti
+              WHERE dti.template_id = dt.id
+                AND dti.active = 1
+          )
+        ORDER BY dt.name ASC
+    ");
+
+    $stmt->execute();
+
+    $multi_document_templates = $stmt->fetchAll(
+        PDO::FETCH_ASSOC
+    );
+
+} catch (Exception $e) {
+
+    $multi_document_templates = array();
+
+}
 $sandugh = sub_sandugh();
 $sub_ashkhas = sub_ashkhas();
 $sub_income = sub_income();
@@ -64,61 +101,7 @@ foreach ($opt as $key => $value) {
 
     }
 }
-/*foreach ($opt as $key => $value) {
-    switch ($key) {
-        case 'bx1' :
-            $arr['one']['bx1'] = $value;
-            break ;
-        case 'col_bx1' :
-            $arr['one']['col_bx1'] = $value;
-            break ;
-        case 'bx2' :
-            $arr['two']['bx2'] = $value;
-            break ;
-        case 'col_bx2' :
-            $arr['two']['col_bx2'] = $value;
-            break ;
-        case 'bx3' :
-            $arr['three']['bx3'] = $value;
-            break ;
-        case 'col_bx3' :
-            $arr['three']['col_bx3'] = $value;
-            break ;
-        case 'bx4' :
-            $arr['four']['bx4'] = $value;
-            break ;
-        case 'col_bx4' :
-            $arr['four']['col_bx4'] = $value;
-            break ;
-        case 'bx5' :
-            $arr['five']['bx5'] = $value;
-            break ;
-        case 'col_bx5' :
-            $arr['five']['col_bx5'] = $value;
-            break ;
-        case 'bx6' :
-            $arr['six']['bx6'] = $value;
-            break ;
-        case 'col_bx6' :
-            $arr['six']['col_bx6'] = $value;
-            break ;
-        case 'bx7' :
-            $arr['seven']['bx7'] = $value;
-            break ;
-        case 'col_bx7' :
-            $arr['seven']['col_bx7'] = $value;
-            break ;
-        case 'bx8' :
-            $arr['eight']['bx8'] = $value;
-            break ;
-        case 'col_bx8' :
-            $arr['eight']['col_bx8'] = $value;
-            break ;
 
-
-
-    }
-}*/
 $size =  sizeof($arr)
 
 ?>
@@ -301,6 +284,28 @@ echo '</div>';
                         </div>
                     </div>
 
+                </div>
+
+                <div class="row clearfix" style="margin-top: 15px;">
+                    <div class="col-xs-12 text-center">
+
+                        <?php if (!empty($multi_document_templates)) { ?>
+
+                            <button
+                                    type="button"
+                                    class="btn bg-indigo btn-lg waves-effect"
+                                    data-toggle="modal"
+                                    data-target="#multi_document_template_modal">
+
+                                <i class="material-icons">playlist_add</i>
+
+                                ثبت سند چندتراکنشی
+
+                            </button>
+
+                        <?php } ?>
+
+                    </div>
                 </div>
 
 
@@ -1275,7 +1280,220 @@ echo '</div>';
     </div>
 </div>
 
-										
 
+<!-- Multi Transaction Template -->
+<div
+        class="modal fade"
+        id="multi_document_template_modal"
+        tabindex="-1"
+        role="dialog"
+        style="display: none;">
+
+    <div class="modal-dialog modal-lg" role="document">
+
+        <div class="modal-content modal-col-indigo">
+
+            <div class="modal-header clearfix">
+
+                <h4 class="modal-title pull-right">
+                    ثبت سند چندتراکنشی
+                </h4>
+
+                <button
+                        type="button"
+                        class="close pull-left"
+                        data-dismiss="modal">
+                    ×
+                </button>
+
+            </div>
+
+            <hr style="border-top: 1px solid #3F51B5;"/>
+
+            <div class="modal-body">
+
+                <div class="row">
+
+                    <div class="col-lg-6">
+
+                        <p class="mg-b-10">
+                            الگوی ثبت سند
+                        </p>
+
+                        <select
+                                class="form-control show-tick"
+                                data-live-search="true"
+                                id="multi_document_template">
+
+                            <option value="">
+                                -- الگو را انتخاب نمایید --
+                            </option>
+
+                            <?php foreach (
+                                $multi_document_templates
+                                as $template
+                            ) { ?>
+
+                                <option
+                                        value="<?php echo (int)$template['id']; ?>">
+
+                                    <?php echo htmlspecialchars(
+                                        $template['name'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ); ?>
+
+                                </option>
+
+                            <?php } ?>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="col-lg-6">
+
+                        <p class="mg-b-10">
+                            تاریخ
+                        </p>
+
+                        <div class="input-group">
+
+                            <div class="input-group-prepend">
+
+                                <div class="input-group-text">
+
+                                    <i class="typcn typcn-calendar-outline tx-24 lh--9 op-6"></i>
+
+                                </div>
+
+                            </div>
+
+                            <input
+                                    type="text"
+                                    id="multi_document_date"
+                                    class="form-control fc-datepicker datep"
+                                    placeholder="MM/DD/YYYY">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <hr>
+
+
+                <div id="multi_document_template_items">
+
+                    <div class="alert alert-info text-center">
+
+                        ابتدا یک الگو را انتخاب نمایید.
+
+                    </div>
+
+                </div>
+
+
+                <div
+                        id="multi_document_template_balance"
+                        style="display:none; margin-top:15px;">
+
+                    <div class="row">
+
+                        <div class="col-md-4">
+
+                            <div class="alert alert-info text-center">
+
+                                <strong>
+                                    جمع بدهکار
+                                </strong>
+
+                                <br>
+
+                                <span
+                                        id="multi_total_bed">
+                                    0
+                                </span>
+
+                                ریال
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <div class="alert alert-info text-center">
+
+                                <strong>
+                                    جمع بستانکار
+                                </strong>
+
+                                <br>
+
+                                <span
+                                        id="multi_total_bes">
+                                    0
+                                </span>
+
+                                ریال
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <div
+                                    id="multi_balance_status"
+                                    class="alert alert-warning text-center">
+
+                                در انتظار ورود مبلغ
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                        type="button"
+                        id="save_multi_document_template"
+                        data-type="ajax-loader"
+                        class="btn bg-light-green waves-effect">
+
+                    ثبت سند
+
+                </button>
+
+
+                <button
+                        type="button"
+                        class="btn btn-link waves-effect pull-left"
+                        data-dismiss="modal">
+
+                    بستن
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 							
  

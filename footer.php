@@ -1556,6 +1556,657 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
 
       });
   </script>
+  <script>
+      $(function () {
+
+          var multiTemplateData = <?php
+
+              $multiTemplateItems = array();
+
+              try {
+
+                  $stmt = $conn->prepare("
+                SELECT
+                    dti.id,
+                    dti.template_id,
+                    dti.sort_order,
+                    dti.title,
+                    dti.operation_type,
+                    dti.hesab_bed,
+                    dti.hesab_bes,
+                    dti.sharh,
+                    dti.default_amount
+                FROM document_template_items dti
+                WHERE dti.active = 1
+                ORDER BY
+                    dti.template_id ASC,
+                    dti.sort_order ASC,
+                    dti.id ASC
+            ");
+
+                  $stmt->execute();
+
+                  while ($item = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+                      $templateId = (int)$item['template_id'];
+
+                      if (!isset($multiTemplateItems[$templateId])) {
+                          $multiTemplateItems[$templateId] = array();
+                      }
+
+                      $multiTemplateItems[$templateId][] = array(
+                          'id' => (int)$item['id'],
+                          'title' => $item['title'],
+                          'operation_type' => $item['operation_type'],
+                          'hesab_bed' => (int)$item['hesab_bed'],
+                          'hesab_bes' => (int)$item['hesab_bes'],
+                          'sharh' => $item['sharh'] ?? '',
+                          'default_amount' =>
+                              $item['default_amount'] !== null
+                                  ? (float)$item['default_amount']
+                                  : null
+                      );
+
+                  }
+
+              } catch (Exception $e) {
+
+                  $multiTemplateItems = array();
+
+              }
+
+              echo json_encode(
+                  $multiTemplateItems,
+                  JSON_UNESCAPED_UNICODE
+              );
+
+              ?>;
+
+
+          var $template = $('#multi_document_template');
+
+          var $itemsContainer =
+              $('#multi_document_template_items');
+
+
+          /*
+           * نام نوع عملیات
+           */
+          function getOperationName(type) {
+
+              switch (type) {
+
+                  case 'cost':
+                      return 'هزینه';
+
+                  case 'income':
+                      return 'درآمد';
+
+                  case 'loan_payment':
+                      return 'پرداخت قسط';
+
+                  case 'transfer':
+                      return 'انتقال وجه';
+
+                  default:
+                      return type;
+              }
+
+          }
+
+
+          /*
+           * فرمت مبلغ
+           */
+          function formatAmount(value) {
+
+              value = String(value || '');
+
+              value = value.replace(/,/g, '');
+
+              if (value === '') {
+                  return '';
+              }
+
+              var number = parseFloat(value);
+
+              if (isNaN(number)) {
+                  return '';
+              }
+
+              return number.toLocaleString('en-US');
+          }
+
+
+          /*
+           * تبدیل مبلغ برای محاسبه
+           */
+          function numericAmount(value) {
+
+              value = String(value || '');
+
+              value = value.replace(/,/g, '');
+
+              value = value.replace(/ /g, '');
+
+              var number = parseFloat(value);
+
+              if (isNaN(number)) {
+                  return 0;
+              }
+
+              return number;
+          }
+
+
+          /*
+           * محاسبه تراز
+           *
+           * چون هر ردیف یک بدهکار و یک بستانکار
+           * با یک مبلغ دارد، مجموع باید برابر باشد.
+           */
+          function updateBalance() {
+
+              var totalBed = 0;
+              var totalBes = 0;
+
+              $('.multi-item-amount').each(function () {
+
+                  var amount =
+                      numericAmount($(this).val());
+
+                  totalBed += amount;
+                  totalBes += amount;
+
+              });
+
+
+              $('#multi_total_bed').text(
+                  totalBed.toLocaleString('en-US')
+              );
+
+              $('#multi_total_bes').text(
+                  totalBes.toLocaleString('en-US')
+              );
+
+
+              var $status =
+                  $('#multi_balance_status');
+
+
+              $('#multi_document_template_balance')
+                  .show();
+
+
+              if (
+                  totalBed === 0
+                  && totalBes === 0
+              ) {
+
+                  $status
+                      .removeClass(
+                          'alert-success alert-danger'
+                      )
+                      .addClass('alert-warning')
+                      .text(
+                          'مبلغ ردیف‌ها را وارد نمایید'
+                      );
+
+                  return false;
+              }
+
+
+              if (totalBed === totalBes) {
+
+                  $status
+                      .removeClass(
+                          'alert-warning alert-danger'
+                      )
+                      .addClass('alert-success')
+                      .text(
+                          'سند متوازن است ✓'
+                      );
+
+                  return true;
+
+              }
+
+
+              $status
+                  .removeClass(
+                      'alert-warning alert-success'
+                  )
+                  .addClass('alert-danger')
+                  .text(
+                      'جمع بدهکار و بستانکار برابر نیست'
+                  );
+
+              return false;
+
+          }
+
+
+          /*
+           * نمایش ردیف‌های Template
+           */
+          function renderMultiTemplate(templateId) {
+
+              $itemsContainer.empty();
+
+              $('#multi_document_template_balance')
+                  .hide();
+
+
+              if (!templateId) {
+
+                  $itemsContainer.html(
+                      '<div class="alert alert-info text-center">' +
+                      'ابتدا یک الگو را انتخاب نمایید.' +
+                      '</div>'
+                  );
+
+                  return;
+              }
+
+
+              var items =
+                  multiTemplateData[templateId];
+
+
+              if (
+                  !items
+                  || !items.length
+              ) {
+
+                  $itemsContainer.html(
+                      '<div class="alert alert-warning text-center">' +
+                      'برای این الگو ردیفی تعریف نشده است.' +
+                      '</div>'
+                  );
+
+                  return;
+              }
+
+
+              var html = '';
+
+              html += '<div class="table-responsive">';
+
+              html += '<table class="table table-bordered table-striped">';
+
+              html += '<thead>';
+
+              html += '<tr>';
+
+              html += '<th>ردیف</th>';
+              html += '<th>عنوان</th>';
+              html += '<th>نوع عملیات</th>';
+              html += '<th>بدهکار</th>';
+              html += '<th>بستانکار</th>';
+              html += '<th>مبلغ</th>';
+              html += '<th>شرح</th>';
+
+              html += '</tr>';
+
+              html += '</thead>';
+
+              html += '<tbody>';
+
+
+              $.each(items, function (index, item) {
+
+                  var defaultAmount =
+                      item.default_amount !== null
+                          ? formatAmount(
+                              item.default_amount
+                          )
+                          : '';
+
+
+                  var sharh =
+                      item.sharh || '';
+
+
+                  html += '<tr>';
+
+
+                  html += '<td>';
+                  html += (index + 1);
+                  html += '</td>';
+
+
+                  html += '<td>';
+                  html += $('<div>')
+                      .text(item.title)
+                      .html();
+                  html += '</td>';
+
+
+                  html += '<td>';
+                  html += $('<div>')
+                      .text(
+                          getOperationName(
+                              item.operation_type
+                          )
+                      )
+                      .html();
+                  html += '</td>';
+
+
+                  html += '<td>';
+                  html += $('<div>')
+                      .text(
+                          'حساب #' +
+                          item.hesab_bed
+                      )
+                      .html();
+                  html += '</td>';
+
+
+                  html += '<td>';
+                  html += $('<div>')
+                      .text(
+                          'حساب #' +
+                          item.hesab_bes
+                      )
+                      .html();
+                  html += '</td>';
+
+
+                  html += '<td>';
+
+                  html += '<input ' +
+                      'type="text" ' +
+                      'class="form-control multi-item-amount" ' +
+                      'data-item-id="' +
+                      item.id +
+                      '" ' +
+                      'value="' +
+                      defaultAmount +
+                      '" ' +
+                      'onkeyup="this.value=separate(this.value);">';
+
+                  html += '</td>';
+
+
+                  html += '<td>';
+
+                  html += '<input ' +
+                      'type="text" ' +
+                      'class="form-control multi-item-sharh" ' +
+                      'data-item-id="' +
+                      item.id +
+                      '" ' +
+                      'value="' +
+                      $('<div>')
+                          .text(sharh)
+                          .html() +
+                      '">';
+
+                  html += '</td>';
+
+
+                  html += '</tr>';
+
+              });
+
+
+              html += '</tbody>';
+
+              html += '</table>';
+
+              html += '</div>';
+
+
+              $itemsContainer.html(html);
+
+
+              $('.multi-item-amount')
+                  .on('input', function () {
+
+                      this.value =
+                          separate(this.value);
+
+                      updateBalance();
+
+                  });
+
+
+              updateBalance();
+
+          }
+
+
+          /*
+           * انتخاب Template
+           */
+          $template.on(
+              'changed.bs.select',
+              function () {
+
+                  renderMultiTemplate(
+                      $(this).val()
+                  );
+
+              }
+          );
+
+
+          /*
+           * ثبت سند چندتراکنشی
+           */
+          $('#save_multi_document_template')
+              .on('click', function () {
+
+                  var templateId =
+                      $template.val();
+
+                  var tarikh =
+                      $('#multi_document_date').val();
+
+
+                  if (!templateId) {
+
+                      swal(
+                          'خطا',
+                          'الگوی ثبت سند را انتخاب نمایید',
+                          'warning'
+                      );
+
+                      return;
+
+                  }
+
+
+                  if (!tarikh) {
+
+                      swal(
+                          'خطا',
+                          'تاریخ را وارد نمایید',
+                          'warning'
+                      );
+
+                      return;
+
+                  }
+
+
+                  var balanced =
+                      updateBalance();
+
+
+                  if (!balanced) {
+
+                      swal(
+                          'خطا',
+                          'جمع مبالغ بدهکار و بستانکار باید برابر باشد و همه مبالغ را وارد نمایید.',
+                          'warning'
+                      );
+
+                      return;
+
+                  }
+
+
+                  var items = {};
+
+
+                  $('.multi-item-amount')
+                      .each(function () {
+
+                          var itemId =
+                              $(this).data('item-id');
+
+                          var amount =
+                              numericAmount(
+                                  $(this).val()
+                              );
+
+
+                          items[itemId] = {
+                              price: amount,
+                              sharh:
+                                  $(
+                                      '.multi-item-sharh[data-item-id="' +
+                                      itemId +
+                                      '"]'
+                                  ).val() || ''
+                          };
+
+                      });
+
+
+                  swal({
+
+                      title: 'ثبت سند چندتراکنشی',
+
+                      text:
+                          'تمام ردیف‌های این الگو با هم ثبت خواهند شد. ادامه می‌دهید؟',
+
+                      type: 'info',
+
+                      showCancelButton: true,
+
+                      closeOnConfirm: false,
+
+                      confirmButtonText: 'ثبت سند',
+
+                      confirmButtonColor: '#1EA64A',
+
+                      cancelButtonColor: '#E4A220',
+
+                      cancelButtonText: 'لغو',
+
+                      showLoaderOnConfirm: true
+
+                  }, function () {
+
+                      $.ajax({
+
+                          url:
+                              "<?php echo BASE_URL; ?>/inc/config/create.php",
+
+                          type: 'POST',
+
+                          dataType: 'json',
+
+                          data: {
+
+                              c_multi_template:
+                                  'c_multi_template',
+
+                              template_id:
+                              templateId,
+
+                              tarikh:
+                              tarikh,
+
+                              items:
+                              items
+
+                          },
+
+                          success: function (result) {
+
+                              if (
+                                  result.res ===
+                                  'registered'
+                              ) {
+
+                                  swal(
+                                      'موفق',
+                                      'تمام تراکنش‌های الگو با موفقیت ثبت شدند',
+                                      'success'
+                                  );
+
+                                  setTimeout(
+                                      function () {
+
+                                          location.reload();
+
+                                      },
+                                      1000
+                                  );
+
+                              } else {
+
+                                  swal(
+                                      'ناموفق',
+                                      result.message ||
+                                      'مشکلی در ثبت سند به وجود آمد',
+                                      'error'
+                                  );
+
+                              }
+
+                          },
+
+                          error: function () {
+
+                              swal(
+                                  'ناموفق',
+                                  'خطایی در ارتباط با سرور به وجود آمد',
+                                  'error'
+                              );
+
+                          }
+
+                      });
+
+                  });
+
+              });
+
+
+          /*
+           * پاک کردن فرم هنگام بسته شدن
+           */
+          $('#multi_document_template_modal')
+              .on(
+                  'hidden.bs.modal',
+                  function () {
+
+                      $template
+                          .val('')
+                          .selectpicker('refresh');
+
+                      $('#multi_document_date')
+                          .val('');
+
+                      $itemsContainer.html(
+                          '<div class="alert alert-info text-center">' +
+                          'ابتدا یک الگو را انتخاب نمایید.' +
+                          '</div>'
+                      );
+
+                      $('#multi_document_template_balance')
+                          .hide();
+
+                  }
+              );
+
+      });
+  </script>
   </body>
 
 </html>
