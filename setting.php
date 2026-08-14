@@ -3,7 +3,6 @@ $titlepage = "تنظیمات";
 require_once 'inc/config/autoload.php';
 require(get_path('header.php'));
 ob_start();
-
 $idu = (int)addslashes(htmlentities($_SESSION['lgn']));
 if (!empty($idu) && isset($idu)) {
     $sql = "SELECT * FROM ";
@@ -14,19 +13,16 @@ if (!empty($idu) && isset($idu)) {
     $row = $stm->fetch(PDO::FETCH_ASSOC);
 }
 if (isset($_POST['save_document_template'])) {
-
     $name = trim($_POST['template_name'] ?? '');
     $operationType = trim($_POST['template_operation_type'] ?? '');
     $hesabBed = (int)($_POST['template_hesab_bed'] ?? 0);
     $hesabBes = (int)($_POST['template_hesab_bes'] ?? 0);
     $sharh = trim($_POST['template_sharh'] ?? '');
-
     $allowedOperationTypes = array(
         'cost',
         'income',
         'transfer'
     );
-
     if (
         $name === '' ||
         !in_array($operationType, $allowedOperationTypes, true) ||
@@ -37,9 +33,7 @@ if (isset($_POST['save_document_template'])) {
                 اطلاعات الگو کامل نیست.
               </div>';
     } else {
-
         try {
-
             $sql = "
                 INSERT INTO `document_templates`
                 (
@@ -60,9 +54,7 @@ if (isset($_POST['save_document_template'])) {
                     1
                 )
             ";
-
             $stmt = $conn->prepare($sql);
-
             $stmt->execute([
                 ':name' => $name,
                 ':operation_type' => $operationType,
@@ -70,12 +62,9 @@ if (isset($_POST['save_document_template'])) {
                 ':hesab_bes' => $hesabBes,
                 ':sharh' => $sharh
             ]);
-
             header('Location: setting.php');
             exit;
-
         } catch (Exception $e) {
-
             echo '<div class="alert alert-danger">
                     خطا در ثبت الگو.
                   </div>';
@@ -86,33 +75,24 @@ if (
     isset($_POST['save_document_template']) &&
     !empty($_POST['template_id'])
 ) {
-
     $id = (int)$_POST['template_id'];
-
     $name = trim(
         $_POST['template_name'] ?? ''
     );
-
     $operationType = $_POST['template_operation_type'] ?? '';
-
     $hesabBed = (int)(
         $_POST['template_hesab_bed'] ?? 0
     );
-
     $hesabBes = (int)(
         $_POST['template_hesab_bes'] ?? 0
     );
-
     $sharh = trim(
         $_POST['template_sharh'] ?? ''
     );
-
     $active = isset($_POST['template_active'])
         ? 1
         : 0;
-
     if ($id > 0 && $name !== '') {
-
         $sql = "
             UPDATE `document_templates`
             SET
@@ -124,9 +104,7 @@ if (
                 `active` = :active
             WHERE `id` = :id
         ";
-
         $stmt = $conn->prepare($sql);
-
         $stmt->execute([
             ':name' => $name,
             ':operation_type' => $operationType,
@@ -318,7 +296,6 @@ $colors=array(
     "black"
 );
 $document_templates = array();
-
 try {
     $sql = "
         SELECT
@@ -338,23 +315,18 @@ try {
             ON bes.`id` = dt.`hesab_bes`
         ORDER BY dt.`id` DESC
     ";
-
     $stmt = $conn->prepare($sql);
     $stmt->execute();
-
     $document_templates = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 } catch (Exception $e) {
     $document_templates = array();
 }
 $template_operation_type = $_POST['template_operation_type']
     ?? 'cost';
-
 $template_bed_accounts = get_document_template_accounts(
     $template_operation_type,
     'bed'
 );
-
 $template_bes_accounts = get_document_template_accounts(
     $template_operation_type,
     'bes'
@@ -368,7 +340,6 @@ $template_accounts = array(
             get_document_template_accounts('cost', 'bes')
         )
     ),
-
     'income' => array(
         'bed' => get_document_template_account_options(
             get_document_template_accounts('income', 'bed')
@@ -377,7 +348,6 @@ $template_accounts = array(
             get_document_template_accounts('income', 'bes')
         )
     ),
-
     'transfer' => array(
         'bed' => get_document_template_account_options(
             sub_sandugh()
@@ -411,8 +381,8 @@ $template_accounts = array(
                                         </a>
                                     </li>
                                     <li role="presentation "><a href="#system_settings"
-                                                                               aria-controls="settings" role="tab"
-                                                                               data-toggle="tab">تنظیمات سیستم</a></li>
+                                                                aria-controls="settings" role="tab"
+                                                                data-toggle="tab">تنظیمات سیستم</a></li>
                                     <li role="presentation "><a href="#profile_settings" aria-controls="settings"
                                                                 role="tab" data-toggle="tab">تنظیمات کاربری</a></li>
                                     <li role="presentation"><a href="#change_password_settings" aria-controls="settings"
@@ -429,6 +399,10 @@ $template_accounts = array(
                                                         الگوهای ثبت سند
                                                     </h3>
                                                 </div>
+                                                <?php require_once 'inc/document_template_items.php'; ?>
+
+
+
                                                 <div class="text-left" style="margin-bottom: 15px;">
                                                     <button
                                                             type="button"
@@ -436,310 +410,197 @@ $template_accounts = array(
                                                             class="btn btn-primary waves-effect"
                                                             data-toggle="collapse"
                                                             data-target="#document_template_form">
-
                                                         <i class="material-icons">add</i>
                                                         <span>افزودن الگو</span>
-
                                                     </button>
                                                 </div>
                                                 <div
                                                         id="document_template_form"
                                                         class="panel-collapse collapse"
                                                         style="margin-bottom: 25px;">
-
                                                     <div class="panel panel-primary">
-
                                                         <div class="panel-heading">
                                                             <h4 class="modal-title" id="document_template_form_title">
-
-                                                            افزودن الگوی ثبت سند
+                                                                افزودن الگوی ثبت سند
                                                             </h4>
                                                         </div>
-
                                                         <div class="panel-body">
-
                                                             <form method="post" id="document_template_form_element" >
-
                                                                 <input
                                                                         type="hidden"
                                                                         name="template_id"
                                                                         id="template_id"
                                                                         value="">
-
                                                                 <div class="row clearfix">
-
                                                                     <div class="col-md-6">
-
                                                                         <div class="form-group">
-
                                                                             <label>نام الگو</label>
-
                                                                             <div class="form-line">
-
                                                                                 <input
                                                                                         type="text"
                                                                                         name="template_name"
                                                                                         id="template_name"
                                                                                         class="form-control"
                                                                                         required>
-
                                                                             </div>
-
                                                                         </div>
-
                                                                     </div>
-
-
                                                                     <div class="col-md-6">
-
                                                                         <div class="form-group">
-
                                                                             <label>نوع عملیات</label>
-
                                                                             <select
                                                                                     name="template_operation_type"
                                                                                     id="template_operation_type"
                                                                                     class="form-control show-tick"
                                                                                     required>
-
                                                                                 <option value="cost">
                                                                                     هزینه
                                                                                 </option>
-
                                                                                 <option value="income">
                                                                                     درآمد
                                                                                 </option>
-
                                                                                 <option value="transfer">
                                                                                     انتقال وجه
                                                                                 </option>
-
                                                                             </select>
-
                                                                         </div>
-
                                                                     </div>
-
                                                                 </div>
-
-
                                                                 <div class="row clearfix">
-
                                                                     <div class="col-md-6">
-
                                                                         <div class="form-group document-template-account-group">
-
                                                                             <label>حساب بدهکار</label>
-
                                                                             <select
                                                                                     name="template_hesab_bed"
                                                                                     id="template_hesab_bed"
                                                                                     class="form-control show-tick"
                                                                                     data-live-search="true"
                                                                                     required>
-
                                                                                 <option value="">
                                                                                     انتخاب حساب بدهکار
                                                                                 </option>
-
                                                                                 <?php foreach ($template_bed_accounts as $key => $value) { ?>
-
                                                                                     <?php if (is_array($value)) { ?>
-
                                                                                         <optgroup
                                                                                                 label="<?php echo htmlspecialchars(
                                                                                                     gethesabname($key),
                                                                                                     ENT_QUOTES,
                                                                                                     'UTF-8'
                                                                                                 ); ?>">
-
                                                                                             <?php foreach ($value as $id => $name) { ?>
-
                                                                                                 <option value="<?php echo (int)$id; ?>">
-
                                                                                                     <?php echo htmlspecialchars(
                                                                                                         $name,
                                                                                                         ENT_QUOTES,
                                                                                                         'UTF-8'
                                                                                                     ); ?>
-
                                                                                                 </option>
-
                                                                                             <?php } ?>
-
                                                                                         </optgroup>
-
                                                                                     <?php } else { ?>
-
                                                                                         <option value="<?php echo (int)$key; ?>">
-
                                                                                             <?php echo htmlspecialchars(
                                                                                                 $value,
                                                                                                 ENT_QUOTES,
                                                                                                 'UTF-8'
                                                                                             ); ?>
-
                                                                                         </option>
-
                                                                                     <?php } ?>
-
                                                                                 <?php } ?>
-
                                                                             </select>
-
                                                                         </div>
-
                                                                     </div>
-
-
                                                                     <div class="col-md-6">
-
                                                                         <div class="form-group document-template-account-group">
-
                                                                             <label>حساب بستانکار</label>
-
                                                                             <select
                                                                                     name="template_hesab_bes"
                                                                                     id="template_hesab_bes"
                                                                                     class="form-control show-tick"
                                                                                     data-live-search="true"
                                                                                     required>
-
                                                                                 <option value="">
                                                                                     انتخاب حساب بستانکار
                                                                                 </option>
-
                                                                                 <?php foreach ($template_bes_accounts as $key => $value) { ?>
-
                                                                                     <?php if (is_array($value)) { ?>
-
                                                                                         <optgroup
                                                                                                 label="<?php echo htmlspecialchars(
                                                                                                     gethesabname($key),
                                                                                                     ENT_QUOTES,
                                                                                                     'UTF-8'
                                                                                                 ); ?>">
-
                                                                                             <?php foreach ($value as $id => $name) { ?>
-
                                                                                                 <option value="<?php echo (int)$id; ?>">
-
                                                                                                     <?php echo htmlspecialchars(
                                                                                                         $name,
                                                                                                         ENT_QUOTES,
                                                                                                         'UTF-8'
                                                                                                     ); ?>
-
                                                                                                 </option>
-
                                                                                             <?php } ?>
-
                                                                                         </optgroup>
-
                                                                                     <?php } else { ?>
-
                                                                                         <option value="<?php echo (int)$key; ?>">
-
                                                                                             <?php echo htmlspecialchars(
                                                                                                 $value,
                                                                                                 ENT_QUOTES,
                                                                                                 'UTF-8'
                                                                                             ); ?>
-
                                                                                         </option>
-
                                                                                     <?php } ?>
-
                                                                                 <?php } ?>
-
                                                                             </select>
-
                                                                         </div>
-
                                                                     </div>
-
                                                                 </div>
-
-
                                                                 <div class="row clearfix">
-
                                                                     <div class="col-md-12">
-
                                                                         <div class="form-group">
-
                                                                             <label>شرح</label>
-
                                                                             <div class="form-line">
-
                     <textarea
                             name="template_sharh"
                             id="template_sharh"
                             class="form-control"
                             rows="3"></textarea>
-
                                                                             </div>
-
                                                                         </div>
-
-
                                                                         <div class="form-group">
-
                                                                             <div class="checkbox">
-
                                                                                 <label>
-
                                                                                     <input
                                                                                             type="checkbox"
                                                                                             name="template_active"
                                                                                             id="template_active"
                                                                                             value="1"
                                                                                             checked>
-
                                                                                     فعال باشد
-
                                                                                 </label>
-
                                                                             </div>
-
                                                                         </div>
-
                                                                     </div>
-
                                                                 </div>
-
-
                                                                 <div class="text-left">
-
                                                                     <button
                                                                             type="submit"
                                                                             name="save_document_template"
                                                                             id="save_document_template"
                                                                             class="btn btn-primary waves-effect">
-
                                                                         ذخیره
-
                                                                     </button>
-
-
                                                                     <button
                                                                             type="button"
                                                                             id="cancel-document-template"
                                                                             class="btn btn-default waves-effect"
                                                                             data-toggle="collapse"
                                                                             data-target="#document_template_form">
-
                                                                         انصراف
-
                                                                     </button>
-
                                                                 </div>
-
                                                             </form>
-
                                                         </div>
-
                                                     </div>
-
                                                 </div>
                                                 <div class="table-responsive">
                                                     <table class="table table-bordered table-striped table-hover">
@@ -828,6 +689,12 @@ $template_accounts = array(
                                                                             <i class="material-icons">edit</i>
                                                                             ویرایش
                                                                         </button>
+                                                                        <a
+                                                                                href="setting.php?template_items=<?php echo (int)$template['id']; ?>"
+                                                                                class="btn btn-info btn-xs waves-effect">
+                                                                            <i class="material-icons">list</i>
+                                                                            ردیف‌ها
+                                                                        </a>
                                                                     </td>
                                                                 </tr>
                                                             <?php } ?>
@@ -847,17 +714,22 @@ $template_accounts = array(
                                                                             data-bes="<?php echo (int)$template['hesab_bes']; ?>"
                                                                             data-sharh="<?php echo htmlspecialchars($template['sharh'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                                                                             data-active="<?php echo (int)$template['active']; ?>">
-
                                                                         <i class="material-icons">edit</i>
                                                                         ویرایش
-
                                                                     </button>
+                                                                    <a
+                                                                            href="setting.php?template_items=<?php echo (int)$template['id']; ?>"
+                                                                            class="btn btn-info btn-xs waves-effect">
+                                                                        <i class="material-icons">list</i>
+                                                                        ردیف‌ها
+                                                                    </a>
                                                                 </td>
                                                             </tr>
                                                         <?php } ?>
                                                         </tbody>
                                                     </table>
                                                 </div>
+
 
                                             </div>
                                         </div>
@@ -873,8 +745,8 @@ $template_accounts = array(
                                                                 data-show-subtext="true" id="col_tsk" name="col_tsk">
                                                             <option value="" selected>--رنگ--</option>
                                                             <?php foreach ($colors as $color){ ?>
-                                                            <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_tsk'] == $color) {echo 'selected';} ?>></option>
-                                                           <?php } ?>
+                                                                <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_tsk'] == $color) {echo 'selected';} ?>></option>
+                                                            <?php } ?>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -990,7 +862,7 @@ $template_accounts = array(
                                                                 name="bx1" data-live-search="true">
                                                             <option value="0" selected>--حساب  را انتخاب نمایید--
                                                             </option>
-                                                <?php list_all_hesab($opt['bx1']); ?>
+                                                            <?php list_all_hesab($opt['bx1']); ?>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1002,7 +874,7 @@ $template_accounts = array(
                                                                     data-show-subtext="true" id="col_bx1" name="col_bx1">
                                                                 <option value="">--رنگ--</option>
                                                                 <?php foreach ($colors as $color){ ?>
-                                                                <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx1'] == $color) {echo 'selected';} ?>></option>
+                                                                    <option data-subtext="<div class='bg-<?php echo $color; ?> col_bxf' /></div>" value="<?php echo $color; ?>" <?php if ($opt['col_bx1'] == $color) {echo 'selected';} ?>></option>
                                                                 <?php } ?>
                                                             </select>
                                                         </div>
@@ -1270,10 +1142,10 @@ $template_accounts = array(
                                     <div role="tabpanel" class="tab-pane fade in" id="change_password_settings">
                                         <form class="form-horizontal" action="" method="post">
                                             <div class="form-group">
-                                            <div class="col-sm-3 text-left">
-                                                <label for="OldPassword" class="control-label">رمز فعلی</label>&nbsp;&nbsp;
-                                                <span toggle="#oldpassword" class="fa fa-fw fa-eye field-icon toggle-password" style="font-size: 15px;"></span>&nbsp;
-                                            </div>
+                                                <div class="col-sm-3 text-left">
+                                                    <label for="OldPassword" class="control-label">رمز فعلی</label>&nbsp;&nbsp;
+                                                    <span toggle="#oldpassword" class="fa fa-fw fa-eye field-icon toggle-password" style="font-size: 15px;"></span>&nbsp;
+                                                </div>
                                                 <div class="col-sm-9">
                                                     <div class="form-line">
                                                         <input type="password" class="form-control" id="oldpassword"
@@ -1297,9 +1169,9 @@ $template_accounts = array(
                                             </div>
                                             <div class="form-group">
                                                 <div class="col-sm-3 text-left">
-                                                <label for="newpasswordconfirm" class="control-label">تکرار
-                                                    رمز</label>&nbsp;&nbsp;
-                                                <span toggle="#newpasswordconfirm" class="fa fa-fw fa-eye field-icon toggle-password" style="font-size: 15px;"></span>&nbsp;
+                                                    <label for="newpasswordconfirm" class="control-label">تکرار
+                                                        رمز</label>&nbsp;&nbsp;
+                                                    <span toggle="#newpasswordconfirm" class="fa fa-fw fa-eye field-icon toggle-password" style="font-size: 15px;"></span>&nbsp;
                                                 </div>
                                                 <div class="col-sm-9">
                                                     <div class="form-line">
@@ -1326,5 +1198,4 @@ $template_accounts = array(
             </div>
         </div>
     </section>
-
 <?php require(get_path('footer.php')); ?>
