@@ -1,6 +1,7 @@
 <?php
 require_once 'autoload.php';
 require_once ('load.php');
+require_once ('functions.php');
 
 function HashPassword($value){
 	return md5("wbnj4b0ksbv".$value."rwbk420bnm");
