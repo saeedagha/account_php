@@ -159,7 +159,7 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
         }
     });
 
-    
+
         $(document).ready(function () {
             $('.dashboard-stat-list').readall({
                 // Default values
@@ -1133,7 +1133,320 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
       });
 
   </script>
+  <script>
+      $(function () {
 
+          var templateAccounts = <?php
+              echo json_encode(
+                  $template_accounts,
+                  JSON_UNESCAPED_UNICODE
+              );
+              ?>;
+
+          var $operationType = $('#template_operation_type');
+          var $hesabBed = $('#template_hesab_bed');
+          var $hesabBes = $('#template_hesab_bes');
+          var $templateForm = $('#document_template_form');
+
+
+          /*
+           * ==========================
+           * نمایش حساب‌ها
+           * ==========================
+           */
+          function renderAccounts($select, accounts) {
+
+              $select.empty();
+
+              $select.append(
+                  $('<option>', {
+                      value: '',
+                      text: 'انتخاب حساب'
+                  })
+              );
+
+              $.each(accounts, function (_, group) {
+
+                  if (group.type === 'group') {
+
+                      var $optgroup = $('<optgroup>', {
+                          label: group.name
+                      });
+
+                      $.each(group.items, function (id, name) {
+
+                          $optgroup.append(
+                              $('<option>', {
+                                  value: id,
+                                  text: name
+                              })
+                          );
+
+                      });
+
+                      $select.append($optgroup);
+
+                  } else {
+
+                      $select.append(
+                          $('<option>', {
+                              value: group.id,
+                              text: group.name
+                          })
+                      );
+
+                  }
+
+              });
+
+              $select.selectpicker('refresh');
+          }
+
+
+          /*
+           * ==========================
+           * بروزرسانی حساب‌ها
+           * ==========================
+           */
+          function updateTemplateAccounts() {
+
+              var operationType = $operationType.val();
+
+              if (!templateAccounts[operationType]) {
+                  return;
+              }
+
+              renderAccounts(
+                  $hesabBed,
+                  templateAccounts[operationType].bed
+              );
+
+              renderAccounts(
+                  $hesabBes,
+                  templateAccounts[operationType].bes
+              );
+          }
+
+
+          /*
+           * ==========================
+           * حالت ویرایش
+           * ==========================
+           */
+          function setEditMode() {
+
+              $('#document_template_form')
+                  .addClass('template-edit-mode');
+
+              $('#save_document_template')
+                  .text('ویرایش')
+                  .removeClass('btn-primary')
+                  .addClass('btn-warning');
+
+              $('#document_template_form_title')
+                  .text('ویرایش الگوی ثبت سند');
+          }
+
+
+          /*
+           * ==========================
+           * حالت ایجاد
+           * ==========================
+           */
+          function setCreateMode() {
+
+              $('#document_template_form_element')
+                  .removeClass('template-edit-mode');
+
+              $('#save_document_template')
+                  .text('ذخیره')
+                  .removeClass('btn-warning')
+                  .addClass('btn-primary');
+
+              $('#document_template_form_title')
+                  .text('افزودن الگوی ثبت سند')
+                  .css('color', '');
+          }
+
+
+          /*
+           * تغییر نوع عملیات
+           */
+          $operationType.on('change', function () {
+              updateTemplateAccounts();
+          });
+
+
+          /*
+           * ==========================
+           * ویرایش Template
+           * ==========================
+           */
+          $('.edit-document-template').on('click', function () {
+
+              var $button = $(this);
+
+              var operation = $button.data('operation');
+              var hesabBed = String($button.data('bed'));
+              var hesabBes = String($button.data('bes'));
+
+
+              /*
+               * فعال کردن حالت ویرایش
+               */
+              setEditMode();
+
+
+              /*
+               * قرار دادن اطلاعات Template
+               */
+              $('#template_id').val(
+                  $button.data('id')
+              );
+
+              $('#template_name').val(
+                  $button.data('name')
+              );
+
+              $('#template_sharh').val(
+                  $button.data('sharh')
+              );
+
+              $('#template_active').prop(
+                  'checked',
+                  parseInt($button.data('active'), 10) === 1
+              );
+
+
+              /*
+               * نوع عملیات
+               */
+              $operationType
+                  .val(operation)
+                  .trigger('change');
+
+
+              /*
+               * بعد از ساخته شدن لیست حساب‌ها،
+               * حساب‌های ذخیره‌شده را انتخاب کن.
+               */
+              setTimeout(function () {
+
+                  $hesabBed
+                      .val(hesabBed)
+                      .selectpicker('refresh');
+
+                  $hesabBes
+                      .val(hesabBes)
+                      .selectpicker('refresh');
+
+              }, 100);
+
+
+              /*
+               * باز کردن فرم
+               */
+              if (!$templateForm.hasClass('in')) {
+                  $templateForm.collapse('show');
+              }
+
+
+              /*
+               * اسکرول نرم به فرم
+               */
+              $('html, body').animate({
+                  scrollTop: $templateForm.offset().top - 30
+              }, 300);
+
+          });
+
+
+          /*
+           * ==========================
+           * افزودن Template جدید
+           * ==========================
+           */
+          $('#add-document-template').on('click', function () {
+
+              /*
+               * حالت ایجاد
+               */
+              setCreateMode();
+
+
+              /*
+               * پاک کردن ID
+               * یعنی حالت INSERT
+               */
+              $('#template_id').val('');
+
+              $('#template_name').val('');
+
+              $('#template_sharh').val('');
+
+              $('#template_active').prop(
+                  'checked',
+                  true
+              );
+
+
+              /*
+               * نوع عملیات پیش‌فرض
+               */
+              $operationType
+                  .val('cost')
+                  .trigger('change');
+
+
+              /*
+               * باز کردن فرم
+               */
+              if (!$templateForm.hasClass('in')) {
+                  $templateForm.collapse('show');
+              }
+
+          });
+
+
+          /*
+           * ==========================
+           * انصراف
+           * ==========================
+           */
+          $('#cancel-document-template').on('click', function () {
+
+              /*
+               * برگشت به حالت ایجاد
+               */
+              setCreateMode();
+
+
+              /*
+               * پاک کردن اطلاعات
+               */
+              $('#template_id').val('');
+
+              $('#template_name').val('');
+
+              $('#template_sharh').val('');
+
+              $('#template_active').prop(
+                  'checked',
+                  true
+              );
+
+
+              /*
+               * نوع عملیات پیش‌فرض
+               */
+              $operationType
+                  .val('cost')
+                  .trigger('change');
+
+          });
+
+      });
+  </script>
   </body>
 
 </html>

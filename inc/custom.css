@@ -333,3 +333,27 @@ right: auto;
     line-height: 36px;
     text-align: right;
 }
+
+#document_template_form_element.template-edit-mode {
+  border: 2px solid #ff9800;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+#document_template_form_element.template-edit-mode .form-line:after {
+  background-color: #ff9800 !important;
+}
+
+#document_template_form_element.template-edit-mode .form-control:focus {
+  border-color: #ff9800 !important;
+}
+
+#document_template_form_element.template-edit-mode .bootstrap-select .btn:focus {
+  border-color: #ff9800 !important;
+}
+
+.template-edit-mode .panel-primary > .panel-heading {
+  color: #fff;
+  background-color: #ff9800;
+  border-color: #ff9800;
+}

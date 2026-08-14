@@ -100,6 +100,11 @@ function get_document_template_accounts($operationType, $side)
     $operationType = (string)$operationType;
     $side = (string)$side;
 
+    /*
+     * هزینه:
+     * بدهکار = هزینه
+     * بستانکار = صندوق
+     */
     if ($operationType === 'cost') {
 
         if ($side === 'bed') {
@@ -111,5 +116,91 @@ function get_document_template_accounts($operationType, $side)
         }
     }
 
+    /*
+     * درآمد:
+     * بدهکار = صندوق
+     * بستانکار = درآمد
+     */
+    if ($operationType === 'income') {
+
+        if ($side === 'bed') {
+            return sub_sandugh();
+        }
+
+        if ($side === 'bes') {
+            return sub_income();
+        }
+    }
+
+    /*
+     * انتقال وجه:
+     * هر دو طرف از حساب‌های قابل انتخاب استفاده می‌کنند.
+     */
+    if ($operationType === 'transfer') {
+
+        return get_all_hesab_options();
+    }
+
     return array();
+}
+function get_document_template_account_options($accounts)
+{
+    global $conn;
+
+    $result = array();
+    $parentIds = array();
+
+    foreach ($accounts as $key => $value) {
+        if (is_array($value)) {
+            $parentIds[] = (int)$key;
+        }
+    }
+
+    $parentIds = array_values(array_unique($parentIds));
+
+    $parentNames = array();
+
+    if (!empty($parentIds)) {
+
+        $placeholders = implode(
+            ',',
+            array_fill(0, count($parentIds), '?')
+        );
+
+        $sql = "
+            SELECT `id`, `h_name`
+            FROM `hesabha`
+            WHERE `id` IN ($placeholders)
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($parentIds);
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $parentNames[(int)$row['id']] = $row['h_name'];
+        }
+    }
+
+    foreach ($accounts as $key => $value) {
+
+        if (is_array($value)) {
+
+            $result[] = array(
+                'type' => 'group',
+                'id' => (int)$key,
+                'name' => $parentNames[(int)$key] ?? '',
+                'items' => $value
+            );
+
+        } else {
+
+            $result[] = array(
+                'type' => 'option',
+                'id' => (int)$key,
+                'name' => $value
+            );
+        }
+    }
+
+    return $result;
 }

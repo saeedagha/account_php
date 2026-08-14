@@ -82,6 +82,62 @@ if (isset($_POST['save_document_template'])) {
         }
     }
 }
+if (
+    isset($_POST['save_document_template']) &&
+    !empty($_POST['template_id'])
+) {
+
+    $id = (int)$_POST['template_id'];
+
+    $name = trim(
+        $_POST['template_name'] ?? ''
+    );
+
+    $operationType = $_POST['template_operation_type'] ?? '';
+
+    $hesabBed = (int)(
+        $_POST['template_hesab_bed'] ?? 0
+    );
+
+    $hesabBes = (int)(
+        $_POST['template_hesab_bes'] ?? 0
+    );
+
+    $sharh = trim(
+        $_POST['template_sharh'] ?? ''
+    );
+
+    $active = isset($_POST['template_active'])
+        ? 1
+        : 0;
+
+    if ($id > 0 && $name !== '') {
+
+        $sql = "
+            UPDATE `document_templates`
+            SET
+                `name` = :name,
+                `operation_type` = :operation_type,
+                `hesab_bed` = :hesab_bed,
+                `hesab_bes` = :hesab_bes,
+                `sharh` = :sharh,
+                `active` = :active
+            WHERE `id` = :id
+        ";
+
+        $stmt = $conn->prepare($sql);
+
+        $stmt->execute([
+            ':name' => $name,
+            ':operation_type' => $operationType,
+            ':hesab_bed' => $hesabBed,
+            ':hesab_bes' => $hesabBes,
+            ':sharh' => $sharh,
+            ':active' => $active,
+            ':id' => $id
+        ]);
+    }
+}
 // START Profile Settings
 if (isset($_POST['profile_settings'])) {
     $error = array();
@@ -262,22 +318,32 @@ $colors=array(
     "black"
 );
 $document_templates = array();
+
 try {
     $sql = "
         SELECT
-            id,
-            name,
-            operation_type,
-            hesab_bed,
-            hesab_bes,
-            sharh,
-            active
-        FROM `document_templates`
-        ORDER BY id DESC
+            dt.`id`,
+            dt.`name`,
+            dt.`operation_type`,
+            dt.`hesab_bed`,
+            dt.`hesab_bes`,
+            dt.`sharh`,
+            dt.`active`,
+            bed.`h_name` AS `hesab_bed_name`,
+            bes.`h_name` AS `hesab_bes_name`
+        FROM `document_templates` AS dt
+        LEFT JOIN `hesabha` AS bed
+            ON bed.`id` = dt.`hesab_bed`
+        LEFT JOIN `hesabha` AS bes
+            ON bes.`id` = dt.`hesab_bes`
+        ORDER BY dt.`id` DESC
     ";
+
     $stmt = $conn->prepare($sql);
     $stmt->execute();
+
     $document_templates = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (Exception $e) {
     $document_templates = array();
 }
@@ -292,6 +358,34 @@ $template_bed_accounts = get_document_template_accounts(
 $template_bes_accounts = get_document_template_accounts(
     $template_operation_type,
     'bes'
+);
+$template_accounts = array(
+    'cost' => array(
+        'bed' => get_document_template_account_options(
+            get_document_template_accounts('cost', 'bed')
+        ),
+        'bes' => get_document_template_account_options(
+            get_document_template_accounts('cost', 'bes')
+        )
+    ),
+
+    'income' => array(
+        'bed' => get_document_template_account_options(
+            get_document_template_accounts('income', 'bed')
+        ),
+        'bes' => get_document_template_account_options(
+            get_document_template_accounts('income', 'bes')
+        )
+    ),
+
+    'transfer' => array(
+        'bed' => get_document_template_account_options(
+            sub_sandugh()
+        ),
+        'bes' => get_document_template_account_options(
+            sub_sandugh()
+        )
+    )
 );
 ?>
     <section class="content">
@@ -338,13 +432,14 @@ $template_bes_accounts = get_document_template_accounts(
                                                 <div class="text-left" style="margin-bottom: 15px;">
                                                     <button
                                                             type="button"
+                                                            id="add-document-template"
                                                             class="btn btn-primary waves-effect"
                                                             data-toggle="collapse"
-                                                            data-target="#document_template_form"
-                                                            aria-expanded="false"
-                                                            aria-controls="document_template_form">
+                                                            data-target="#document_template_form">
+
                                                         <i class="material-icons">add</i>
                                                         <span>افزودن الگو</span>
+
                                                     </button>
                                                 </div>
                                                 <div
@@ -355,33 +450,50 @@ $template_bes_accounts = get_document_template_accounts(
                                                     <div class="panel panel-primary">
 
                                                         <div class="panel-heading">
-                                                            <h4 class="panel-title">
-                                                                افزودن الگوی ثبت سند
+                                                            <h4 class="modal-title" id="document_template_form_title">
+
+                                                            افزودن الگوی ثبت سند
                                                             </h4>
                                                         </div>
 
                                                         <div class="panel-body">
 
-                                                            <form method="post">
+                                                            <form method="post" id="document_template_form_element" >
+
+                                                                <input
+                                                                        type="hidden"
+                                                                        name="template_id"
+                                                                        id="template_id"
+                                                                        value="">
 
                                                                 <div class="row clearfix">
 
                                                                     <div class="col-md-6">
+
                                                                         <div class="form-group">
+
                                                                             <label>نام الگو</label>
 
                                                                             <div class="form-line">
+
                                                                                 <input
                                                                                         type="text"
                                                                                         name="template_name"
+                                                                                        id="template_name"
                                                                                         class="form-control"
                                                                                         required>
+
                                                                             </div>
+
                                                                         </div>
+
                                                                     </div>
 
+
                                                                     <div class="col-md-6">
+
                                                                         <div class="form-group">
+
                                                                             <label>نوع عملیات</label>
 
                                                                             <select
@@ -403,7 +515,9 @@ $template_bes_accounts = get_document_template_accounts(
                                                                                 </option>
 
                                                                             </select>
+
                                                                         </div>
+
                                                                     </div>
 
                                                                 </div>
@@ -413,7 +527,7 @@ $template_bes_accounts = get_document_template_accounts(
 
                                                                     <div class="col-md-6">
 
-                                                                        <div class="form-group">
+                                                                        <div class="form-group document-template-account-group">
 
                                                                             <label>حساب بدهکار</label>
 
@@ -442,11 +556,13 @@ $template_bes_accounts = get_document_template_accounts(
                                                                                             <?php foreach ($value as $id => $name) { ?>
 
                                                                                                 <option value="<?php echo (int)$id; ?>">
+
                                                                                                     <?php echo htmlspecialchars(
                                                                                                         $name,
                                                                                                         ENT_QUOTES,
                                                                                                         'UTF-8'
                                                                                                     ); ?>
+
                                                                                                 </option>
 
                                                                                             <?php } ?>
@@ -456,11 +572,13 @@ $template_bes_accounts = get_document_template_accounts(
                                                                                     <?php } else { ?>
 
                                                                                         <option value="<?php echo (int)$key; ?>">
+
                                                                                             <?php echo htmlspecialchars(
                                                                                                 $value,
                                                                                                 ENT_QUOTES,
                                                                                                 'UTF-8'
                                                                                             ); ?>
+
                                                                                         </option>
 
                                                                                     <?php } ?>
@@ -476,7 +594,7 @@ $template_bes_accounts = get_document_template_accounts(
 
                                                                     <div class="col-md-6">
 
-                                                                        <div class="form-group">
+                                                                        <div class="form-group document-template-account-group">
 
                                                                             <label>حساب بستانکار</label>
 
@@ -505,11 +623,13 @@ $template_bes_accounts = get_document_template_accounts(
                                                                                             <?php foreach ($value as $id => $name) { ?>
 
                                                                                                 <option value="<?php echo (int)$id; ?>">
+
                                                                                                     <?php echo htmlspecialchars(
                                                                                                         $name,
                                                                                                         ENT_QUOTES,
                                                                                                         'UTF-8'
                                                                                                     ); ?>
+
                                                                                                 </option>
 
                                                                                             <?php } ?>
@@ -519,11 +639,13 @@ $template_bes_accounts = get_document_template_accounts(
                                                                                     <?php } else { ?>
 
                                                                                         <option value="<?php echo (int)$key; ?>">
+
                                                                                             <?php echo htmlspecialchars(
                                                                                                 $value,
                                                                                                 ENT_QUOTES,
                                                                                                 'UTF-8'
                                                                                             ); ?>
+
                                                                                         </option>
 
                                                                                     <?php } ?>
@@ -549,10 +671,33 @@ $template_bes_accounts = get_document_template_accounts(
 
                                                                             <div class="form-line">
 
-                                <textarea
-                                        name="template_sharh"
-                                        class="form-control"
-                                        rows="3"></textarea>
+                    <textarea
+                            name="template_sharh"
+                            id="template_sharh"
+                            class="form-control"
+                            rows="3"></textarea>
+
+                                                                            </div>
+
+                                                                        </div>
+
+
+                                                                        <div class="form-group">
+
+                                                                            <div class="checkbox">
+
+                                                                                <label>
+
+                                                                                    <input
+                                                                                            type="checkbox"
+                                                                                            name="template_active"
+                                                                                            id="template_active"
+                                                                                            value="1"
+                                                                                            checked>
+
+                                                                                    فعال باشد
+
+                                                                                </label>
 
                                                                             </div>
 
@@ -568,15 +713,17 @@ $template_bes_accounts = get_document_template_accounts(
                                                                     <button
                                                                             type="submit"
                                                                             name="save_document_template"
+                                                                            id="save_document_template"
                                                                             class="btn btn-primary waves-effect">
 
-                                                                        <i class="material-icons">save</i>
-                                                                        <span>ذخیره</span>
+                                                                        ذخیره
 
                                                                     </button>
 
+
                                                                     <button
                                                                             type="button"
+                                                                            id="cancel-document-template"
                                                                             class="btn btn-default waves-effect"
                                                                             data-toggle="collapse"
                                                                             data-target="#document_template_form">
@@ -604,6 +751,7 @@ $template_bes_accounts = get_document_template_accounts(
                                                             <th>حساب بستانکار</th>
                                                             <th>شرح</th>
                                                             <th>وضعیت</th>
+                                                            <th>عملیات</th>
                                                         </tr>
                                                         </thead>
                                                         <tbody>
@@ -635,10 +783,18 @@ $template_bes_accounts = get_document_template_accounts(
                                                                         ?>
                                                                     </td>
                                                                     <td>
-                                                                        <?php echo (int)$template['hesab_bed']; ?>
+                                                                        <?php echo htmlspecialchars(
+                                                                            $template['hesab_bed_name'] ?? '-',
+                                                                            ENT_QUOTES,
+                                                                            'UTF-8'
+                                                                        ); ?>
                                                                     </td>
                                                                     <td>
-                                                                        <?php echo (int)$template['hesab_bes']; ?>
+                                                                        <?php echo htmlspecialchars(
+                                                                            $template['hesab_bes_name'] ?? '-',
+                                                                            ENT_QUOTES,
+                                                                            'UTF-8'
+                                                                        ); ?>
                                                                     </td>
                                                                     <td>
                                                                         <?php echo htmlspecialchars(
@@ -658,12 +814,44 @@ $template_bes_accounts = get_document_template_accounts(
                                         </span>
                                                                         <?php } ?>
                                                                     </td>
+                                                                    <td>
+                                                                        <button
+                                                                                type="button"
+                                                                                class="btn btn-warning btn-xs waves-effect edit-document-template"
+                                                                                data-id="<?php echo (int)$template['id']; ?>"
+                                                                                data-name="<?php echo htmlspecialchars($template['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                                                data-operation="<?php echo htmlspecialchars($template['operation_type'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                                                data-bed="<?php echo (int)$template['hesab_bed']; ?>"
+                                                                                data-bes="<?php echo (int)$template['hesab_bes']; ?>"
+                                                                                data-sharh="<?php echo htmlspecialchars($template['sharh'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                                                                data-active="<?php echo (int)$template['active']; ?>">
+                                                                            <i class="material-icons">edit</i>
+                                                                            ویرایش
+                                                                        </button>
+                                                                    </td>
                                                                 </tr>
                                                             <?php } ?>
                                                         <?php } else { ?>
                                                             <tr>
-                                                                <td colspan="6" class="text-center">
+                                                                <td colspan="7" class="text-center">
                                                                     الگویی ثبت نشده است.
+                                                                </td>
+                                                                <td>
+                                                                    <button
+                                                                            type="button"
+                                                                            class="btn btn-warning btn-xs waves-effect edit-document-template"
+                                                                            data-id="<?php echo (int)$template['id']; ?>"
+                                                                            data-name="<?php echo htmlspecialchars($template['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                                            data-operation="<?php echo htmlspecialchars($template['operation_type'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                                            data-bed="<?php echo (int)$template['hesab_bed']; ?>"
+                                                                            data-bes="<?php echo (int)$template['hesab_bes']; ?>"
+                                                                            data-sharh="<?php echo htmlspecialchars($template['sharh'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                                                            data-active="<?php echo (int)$template['active']; ?>">
+
+                                                                        <i class="material-icons">edit</i>
+                                                                        ویرایش
+
+                                                                    </button>
                                                                 </td>
                                                             </tr>
                                                         <?php } ?>
@@ -1138,4 +1326,5 @@ $template_bes_accounts = get_document_template_accounts(
             </div>
         </div>
     </section>
+
 <?php require(get_path('footer.php')); ?>
