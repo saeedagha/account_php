@@ -357,3 +357,19 @@ right: auto;
   background-color: #ff9800;
   border-color: #ff9800;
 }
+/* ==========================================================
+   رفع مشکل Bootstrap Select داخل table-responsive
+   ========================================================== */
+
+#multi_document_template_items .table-responsive {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+#multi_document_template_items .bootstrap-select {
+    position: relative;
+}
+
+#multi_document_template_items .bootstrap-select .dropdown-menu {
+    z-index: 9999;
+}

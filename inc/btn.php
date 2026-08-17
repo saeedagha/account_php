@@ -4,11 +4,8 @@
  * الگوهای چندتراکنشی
  * ==============================
  */
-
 $multi_document_templates = array();
-
 try {
-
     $stmt = $conn->prepare("
         SELECT
             dt.id,
@@ -24,17 +21,12 @@ try {
           )
         ORDER BY dt.name ASC
     ");
-
     $stmt->execute();
-
     $multi_document_templates = $stmt->fetchAll(
         PDO::FETCH_ASSOC
     );
-
 } catch (Exception $e) {
-
     $multi_document_templates = array();
-
 }
 $sandugh = sub_sandugh();
 $sub_ashkhas = sub_ashkhas();
@@ -97,15 +89,10 @@ foreach ($opt as $key => $value) {
            if($value !==0 && !empty($value)) {    $arr['eight']['col_bx'] = $value; }
             break ;
 
-
-
     }
 }
-
 $size =  sizeof($arr)
-
 ?>
-
 <?php
 echo '<div class="row clearfix">';
 foreach ($arr as $k=>$b) {
@@ -122,7 +109,6 @@ foreach ($arr as $k=>$b) {
         </div>
     </div>
 
-
 <?php }
 echo '<div class="col-lg-3 col-md-3 col-sm-6 col-xs-12 text-center">
     <a href="javascript:void(0);" class="calculator_bt"
@@ -134,16 +120,12 @@ echo '</div>';
 ?>
 
 
-
-
 <!-- Transfer -->
 <div class="modal fade " id="calc_modal" tabindex="-1" role="dialog" style="display: none;">
     <div class="modal-dialog" role="document">
         <!-- modal-col-green -->
         <div class="mtient">
-
             <div class="mopty">
-
 
                 <div class="nk_container" dir="ltr">
                     <!--- Calc Table -->
@@ -185,7 +167,6 @@ echo '</div>';
                             <td> <input class="calc-button" type="button" value="0" data-display="0"> </td>
                             <td> <input class="calc-button" type="button" value="00" data-display="00"> </td>
                             <td class="equal-cell"> <input class="calc-button incon spcl" type="button" value="=" data-action="total"> </td>
-
                         </tr>
                         <tr class="morerows">
                             <td class="dot-cell"> <input class="calc-button incon" type="button" value="." data-display="."> </td>
@@ -198,7 +179,6 @@ echo '</div>';
                             <td> <input class="calc-button" type="button" value="sin" data-action="sin"> </td>
                             <td> <input class="calc-button" type="button" value="tan" data-action="tan"> </td>
                             <td> <input class="calc-button" type="button" value="ln" data-action="log"> </td>
-
                         </tr>
                         <tr>
                             <td colspan="4"><input class="calc-button long spcl" type="button" value="History" data-action="history"></td>
@@ -216,23 +196,17 @@ echo '</div>';
                     </div>
                 </div>
 
-
-
             </div>
-
 
         </div>
     </div>
 </div>
 
 
-
-
 <div class="row clearfix">
     <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="card">
             <div class="body">
-
                 <div class="row">
                     <div class="col-md-4">
                         <div class="btn-groups">
@@ -246,7 +220,6 @@ echo '</div>';
                                 <li role="separator" class="divider"></li>
                                 <li><a href="javascript:void(0);" class=" waves-effect waves-block"
                                        data-toggle="modal" data-target="#pay_modal">پرداخت قسط</a></li>
-
                                 <li role="separator" class="divider"></li>
                                 <li><a href="javascript:void(0);" class=" waves-effect waves-block"
                                        data-toggle="modal" data-target="#debt_modal">قرض دادن</a></li>
@@ -265,11 +238,9 @@ echo '</div>';
                                 <li role="separator" class="divider"></li>
                                 <li><a href="javascript:void(0);" class=" waves-effect waves-block"
                                        data-toggle="modal" data-target="#debt_on_modal">دریافت از دیگران</a></li>
-
                                 <li role="separator" class="divider"></li>
                                 <li><a href="javascript:void(0);" class=" waves-effect waves-block"
                                        data-toggle="modal" data-target="#loan_modal">دریافت وام</a></li>
-
 
                             </ul>
                         </div>
@@ -280,34 +251,146 @@ echo '</div>';
                                     data-toggle="modal" data-target="#transfer_modal">
                                 جابجایی
                             </button>
-
                         </div>
                     </div>
-
                 </div>
-
                 <div class="row clearfix" style="margin-top: 15px;">
                     <div class="col-xs-12 text-center">
-
                         <?php if (!empty($multi_document_templates)) { ?>
-
                             <button
                                     type="button"
+                                    id="multi-document-template-toggle"
                                     class="btn bg-indigo btn-lg waves-effect"
-                                    data-toggle="modal"
-                                    data-target="#multi_document_template_modal">
-
+                                    data-toggle="collapse"
+                                    data-target="#multi_document_template_form"
+                                    aria-expanded="false"
+                                    aria-controls="multi_document_template_form">
                                 <i class="material-icons">playlist_add</i>
-
                                 ثبت سند چندتراکنشی
-
                             </button>
-
                         <?php } ?>
+                        <!-- Multi Transaction Template -->
+                        <div
+                                class="collapse"
+                                id="multi_document_template_form"
+                                style="margin-top: 20px; margin-bottom: 25px;">
 
+                            <div class="card">
+
+                                <div class="header">
+                                    <h2>
+                                        ثبت سند چندتراکنشی
+                                    </h2>
+                                </div>
+
+                                <div class="body">
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <p class="mg-b-10">
+                                                الگوی ثبت سند
+                                            </p>
+                                            <select
+                                                    class="form-control show-tick"
+                                                    data-live-search="true"
+                                                    id="multi_document_template">
+                                                <option value="">
+                                                    -- الگو را انتخاب نمایید --
+                                                </option>
+                                                <?php foreach (
+                                                    $multi_document_templates
+                                                    as $template
+                                                ) { ?>
+                                                    <option
+                                                            value="<?php echo (int)$template['id']; ?>">
+                                                        <?php echo htmlspecialchars(
+                                                            $template['name'],
+                                                            ENT_QUOTES,
+                                                            'UTF-8'
+                                                        ); ?>
+                                                    </option>
+                                                <?php } ?>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-lg-6">
+                                            <p class="mg-b-10">
+                                                تاریخ
+                                            </p>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <div class="input-group-text">
+                                                        <i class="typcn typcn-calendar-outline tx-24 lh--9 op-6"></i>
+                                                    </div>
+                                                </div>
+                                                <input
+                                                        type="text"
+                                                        id="multi_document_date"
+                                                        class="form-control fc-datepicker datep"
+                                                        placeholder="MM/DD/YYYY">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr>
+
+                                    <div id="multi_document_template_items">
+                                        <div class="alert alert-info text-center">
+                                            ابتدا یک الگو را انتخاب نمایید.
+                                        </div>
+                                    </div>
+
+                                    <div
+                                            id="multi_document_template_balance"
+                                            style="display:none; margin-top:15px;">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="alert alert-info text-center">
+                                                    <strong>
+                                                        جمع بدهکار
+                                                    </strong>
+                                                    <br>
+                                                    <span
+                                                            id="multi_total_bed">
+                                    0
+                                </span>
+                                                    ریال
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div class="alert alert-info text-center">
+                                                    <strong>
+                                                        جمع بستانکار
+                                                    </strong>
+                                                    <br>
+                                                    <span
+                                                            id="multi_total_bes">
+                                    0
+                                </span>
+                                                    ریال
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <div
+                                                        id="multi_balance_status"
+                                                        class="alert alert-warning text-center">
+                                                    در انتظار ورود مبلغ
+                                                </div>
+                                                <button
+                                                        type="button"
+                                                        id="save_multi_document_template"
+                                                        class="btn btn-success">
+                                                    ثبت سند
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
 
                 <div class="row clearfix">
                     <!-- Visitors -->
@@ -339,7 +422,6 @@ echo '</div>';
                                         }
                                     }
                                     ?>
-
                                 </ul>
                                 <div class="dashboard-stat-list clearfix ">
                                     <div class="font-bold m-b--35 font-17">جمع کل : <span class="pull-left"><b
@@ -352,7 +434,6 @@ echo '</div>';
                                                 }
                                                  echo number_format(str_replace('-', '', $sums))
                                                 ?></b> <small>ریال</small></span></div>
-
                                 </div>
                             </div>
                         </div>
@@ -364,7 +445,6 @@ echo '</div>';
                             <div class="body bg-teal" style="min-height:402px;">
                                 <div class="m-b--35 font-bold">درآمد ها</div>
                                 <ul class="dashboard-stat-list">
-
                                     <?php $munde =0; foreach($sub_income as $key=>$value){
                                         // get child and sum val
                                         $total_bes = sums($key, 0);
@@ -399,7 +479,6 @@ echo '</div>';
                                                 }
                                                 echo number_format(str_replace('-', '', $sums));
                                                 ?></b> <small>ریال</small></span></div>
-
                                 </div>
                             </div>
                         </div>
@@ -411,7 +490,6 @@ echo '</div>';
                             <div class="body bg-cyan">
                                 <div class="font-bold m-b--35">اشخاص</div>
                                 <ul class="dashboard-stat-list">
-
                                     <?php $munde =0; foreach($sub_ashkhas as $key=>$value){
                                         // get child and sum val
                                         $total_bes = sums($key, 0);
@@ -435,7 +513,6 @@ echo '</div>';
                                         }
                                     }
                                     ?>
-
                                 </ul>
                                 <div class="dashboard-stat-list clearfix ">
                                     <div class="font-bold m-b--35 font-17">جمع کل : <span class="pull-left"><b
@@ -447,21 +524,17 @@ echo '</div>';
                                                 }
                                                 echo number_format($sums);
                                                 ?></b> <small>ریال</small></span></div>
-
                                 </div>
-
                             </div>
                         </div>
                     </div>
                     <!-- #END# Answered Tickets -->
                 </div>
 
-
             </div>
         </div>
     </div>
 </div>
-
 
 <!-- Transfer -->
 <div class="modal fade " id="transfer_modal" tabindex="-1" role="dialog" style="display: none;">
@@ -477,16 +550,12 @@ echo '</div>';
                 <div class="row">
                     <div class="col-lg-12">
                         <p class="mg-b-10">الگوی ثبت سند</p>
-
                         <select
                                 class="form-control show-tick"
                                 data-live-search="true"
                                 id="document_template_transfer">
-
                             <option value="">-- بدون الگو --</option>
-
                             <?php foreach ($transfer_templates as $template) { ?>
-
                                 <option
                                         value="<?php echo (int)$template['id']; ?>"
                                         data-hesab-bed="<?php echo (int)$template['hesab_bed']; ?>"
@@ -503,17 +572,13 @@ echo '</div>';
                                         'UTF-8'
                                     ); ?>
                                 </option>
-
                             <?php } ?>
-
                         </select>
                     </div>
                 </div>
             </div>
-
             <hr style="border-top: 1px solid #008477;"/>
             <div class="modal-body">
-
 
                 <div class="row">
                     <div class="col-lg-6">
@@ -535,9 +600,7 @@ echo '</div>';
                                 <input type="tel" class="form-control" id="price8" aria-label="مبلغ به ریال"
                                        placeholder="مبلغ به ریال" onkeyup="javascript:this.value=separate(this.value);">
                             </div>
-
                         </div>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6 " style="margin-bottom: 20px;">
                         <p class="mg-b-10">از </p>
@@ -556,16 +619,13 @@ echo '</div>';
                                 }
                             }
                             ?>
-
                         </select>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6 ">
                         <p>
                             <b>واریز به</b>
                         </p>
                         <select class="form-control show-tick" data-live-search="true" id="cst8">
-
                             <option value="0" selected>--حساب را انتخاب نمایید--</option>
                             <?php
                             foreach ($sandugh as $key => $value) {
@@ -580,17 +640,13 @@ echo '</div>';
                                 }
                             }
                             ?>
-
                         </select>
-
                     </div><!-- col-3 -->
-
                     <div class="clearfix"></div>
                     <br/>
                     <div class="col-lg-12">
                         <textarea rows="3" class="form-control" id="sharh8" placeholder="شرح سند"></textarea>
                     </div><!-- col -->
-
                 </div><!-- row -->
             </div>
             <div class="modal-footer ">
@@ -599,15 +655,12 @@ echo '</div>';
                     <button type="button" data-type="ajax-loader" class="sabt_cost8 btn bg-light-green waves-effect">
                         جابجایی
                     </button>
-
                 </div>
                 <button type="button" class="btn btn-link waves-effect pull-left" data-dismiss="modal">بستن</button>
             </div>
-
         </div>
     </div>
 </div>
-
 
 <!-- Income -->
 <div class="modal fade " id="income_modal" tabindex="-1" role="dialog" style="display: none;">
@@ -624,16 +677,12 @@ echo '</div>';
                     <div class="row">
                         <div class="col-lg-12">
                             <p class="mg-b-10">الگوی ثبت سند</p>
-
                             <select
                                     class="form-control show-tick"
                                     data-live-search="true"
                                     id="document_template_income">
-
                                 <option value="">-- بدون الگو --</option>
-
                                 <?php foreach ($income_templates as $template) { ?>
-
                                     <option
                                             value="<?php echo (int)$template['id']; ?>"
                                             data-hesab-bed="<?php echo (int)$template['hesab_bed']; ?>"
@@ -650,14 +699,11 @@ echo '</div>';
                                             'UTF-8'
                                         ); ?>
                                     </option>
-
                                 <?php } ?>
-
                             </select>
                         </div>
                     </div>
                 </div>
-
                 <div class="row">
                     <div class="col-lg-6">
                         <p class="mg-b-10">تاریخ</p>
@@ -678,15 +724,12 @@ echo '</div>';
                                 <input type="tel" class="form-control" id="price1" aria-label="مبلغ به ریال"
                                        placeholder="مبلغ به ریال" onkeyup="javascript:this.value=separate(this.value);">
                             </div>
-
                         </div>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6" style="margin-bottom: 20px;">
                         <p class="mg-b-10">بابت</p>
                         <select class="form-control show-tick" data-live-search="true" id="hesab1">
                             <option value="0" selected>--درآمد را انتخاب نمایید--</option>
-
                             <?php
                             foreach ($sub_income as $key => $value) {
                                 if (is_array($value)) {
@@ -701,7 +744,6 @@ echo '</div>';
                             }
                             ?>
                         </select>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6">
                         <p>
@@ -709,7 +751,6 @@ echo '</div>';
                         </p>
                         <select class="form-control show-tick" data-live-search="true" id="cst1">
                             <option value="0" selected>--حساب را انتخاب نمایید--</option>
-
                             <?php
                             foreach ($sandugh as $key => $value) {
                                 if (is_array($value)) {
@@ -723,16 +764,13 @@ echo '</div>';
                                 }
                             }
                             ?>
-
                         </select>
                     </div><!-- col-3 -->
-
                     <div class="clearfix"></div>
                     <br/>
                     <div class="col-lg-12">
                         <textarea rows="3" class="form-control" id="sharh1" placeholder="شرح سند"></textarea>
                     </div><!-- col -->
-
                 </div><!-- row -->
             </div>
             <div class="modal-footer ">
@@ -741,15 +779,12 @@ echo '</div>';
                     <button type="button" data-type="ajax-loader" class="sabt_cost1 btn bg-light-green waves-effect">ثبت
                         درآمد
                     </button>
-
                 </div>
                 <button type="button" class="btn btn-link waves-effect pull-left" data-dismiss="modal">بستن</button>
             </div>
-
         </div>
     </div>
 </div>
-
 
 <!-- Debt_on -->
 <div class="modal fade " id="debt_on_modal" tabindex="-1" role="dialog" style="display: none;">
@@ -762,7 +797,6 @@ echo '</div>';
             </div>
             <hr style="border-top: 1px solid #008477;"/>
             <div class="modal-body">
-
 
                 <div class="row">
                     <div class="col-lg-6">
@@ -784,9 +818,7 @@ echo '</div>';
                                 <input type="tel" class="form-control" id="price2" aria-label="مبلغ به ریال"
                                        placeholder="مبلغ به ریال" onkeyup="javascript:this.value=separate(this.value);">
                             </div>
-
                         </div>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6" style="margin-bottom: 20px;">
                         <p>
@@ -794,7 +826,6 @@ echo '</div>';
                         </p>
                         <select class="form-control show-tick" data-live-search="true" id="cst2">
                             <option value="0" selected>--حساب را انتخاب نمایید--</option>
-
                             <?php
                             foreach ($sandugh as $key => $value) {
                                 if (is_array($value)) {
@@ -808,32 +839,25 @@ echo '</div>';
                                 }
                             }
                             ?>
-
                         </select>
-
                         </select>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6">
                         <p class="mg-b-10">از کی</p>
                         <select class="form-control show-tick" data-live-search="true" id="hesab2">
                             <option value="0" selected>--شخص را انتخاب نمایید--</option>
-
                             <?php
-
                             foreach ($sub_ashkhas as $key => $value) {
                                 echo '<option value="' . $key . '">' . $value . '</option>';
                             }
                             ?>
                         </select>
                     </div><!-- col-3 -->
-
                     <div class="clearfix"></div>
                     <br/>
                     <div class="col-lg-12">
                         <textarea rows="3" class="form-control" id="sharh2" placeholder="شرح سند"></textarea>
                     </div><!-- col -->
-
                 </div><!-- row -->
             </div>
             <div class="modal-footer ">
@@ -842,15 +866,12 @@ echo '</div>';
                     <button type="button" data-type="ajax-loader" class="sabt_cost2 btn bg-light-green waves-effect">
                         دریافت از اشخاص
                     </button>
-
                 </div>
                 <button type="button" class="btn btn-link waves-effect pull-left" data-dismiss="modal">بستن</button>
             </div>
-
         </div>
     </div>
 </div>
-
 
 <!-- Loan -->
 <div class="modal fade " id="loan_modal" tabindex="-1" role="dialog" style="display: none;">
@@ -863,7 +884,6 @@ echo '</div>';
             </div>
             <hr style="border-top: 1px solid #008477;"/>
             <div class="modal-body">
-
 
                 <div class="row">
                     <div class="col-lg-6">
@@ -885,9 +905,7 @@ echo '</div>';
                                 <input type="tel" class="form-control" id="price3" aria-label="مبلغ به ریال"
                                        placeholder="مبلغ به ریال" onkeyup="javascript:this.value=separate(this.value);">
                             </div>
-
                         </div>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6" style="margin-bottom: 20px;">
                         <p class="mg-b-10">بابت</p>
@@ -899,7 +917,6 @@ echo '</div>';
                             }
                             ?>
                         </select>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6">
                         <p>
@@ -907,7 +924,6 @@ echo '</div>';
                         </p>
                         <select class="form-control show-tick" data-live-search="true" id="cst3">
                             <option value="0" selected>--حساب را انتخاب نمایید--</option>
-
                             <?php
                             foreach ($sandugh as $key => $value) {
                                 if (is_array($value)) {
@@ -921,16 +937,13 @@ echo '</div>';
                                 }
                             }
                             ?>
-
                         </select>
                     </div><!-- col-3 -->
-
                     <div class="clearfix"></div>
                     <br/>
                     <div class="col-lg-12">
                         <textarea rows="3" class="form-control" id="sharh3" placeholder="شرح سند"></textarea>
                     </div><!-- col -->
-
                 </div><!-- row -->
             </div>
             <div class="modal-footer ">
@@ -939,15 +952,12 @@ echo '</div>';
                     <button type="button" data-type="ajax-loader" class="sabt_cost3 btn bg-light-green waves-effect">
                         دریافت از اشخاص
                     </button>
-
                 </div>
                 <button type="button" class="btn btn-link waves-effect pull-left" data-dismiss="modal">بستن</button>
             </div>
-
         </div>
     </div>
 </div>
-
 
 <!-- Cost -->
 <div class="modal fade " id="cost_modal" tabindex="-1" role="dialog" style="display: none;">
@@ -962,14 +972,12 @@ echo '</div>';
                 <div class="row">
                     <div class="col-lg-12">
                         <p class="mg-b-10">الگوی ثبت سند</p>
-
                         <select
                                 class="form-control show-tick"
                                 data-live-search="true"
                                 id="document_template_cost"
                         >
                             <option value="">-- بدون الگو --</option>
-
                             <?php foreach ($cost_templates as $template) { ?>
                                 <option
                                         value="<?php echo (int) $template['id']; ?>"
@@ -980,14 +988,12 @@ echo '</div>';
                                     <?php echo htmlspecialchars($template['name'], ENT_QUOTES, 'UTF-8'); ?>
                                 </option>
                             <?php } ?>
-
                         </select>
                     </div>
                 </div>
             </div>
             <hr style="border-top: 1px solid #008477;"/>
             <div class="modal-body">
-
 
                 <div class="row">
                     <div class="col-lg-6">
@@ -1009,7 +1015,6 @@ echo '</div>';
                                 <input type="tel" class="form-control" id="price4" aria-label="مبلغ به ریال"
                                        placeholder="مبلغ به ریال" onkeyup="javascript:this.value=separate(this.value);">
                             </div>
-
                         </div>
                     </div><!-- col-3 -->
                     <div class="col-lg-6" style="margin-bottom: 20px;">
@@ -1029,9 +1034,7 @@ echo '</div>';
                                 }
                             }
                             ?>
-
                         </select>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6">
                         <p>
@@ -1053,16 +1056,13 @@ echo '</div>';
                             }
                             ?>
 
-
                         </select>
                     </div><!-- col-3 -->
-
                     <div class="clearfix"></div>
                     <br/>
                     <div class="col-lg-12">
                         <textarea rows="3" class="form-control" id="sharh4" placeholder="شرح سند"></textarea>
                     </div><!-- col -->
-
                 </div><!-- row -->
             </div>
             <div class="modal-footer ">
@@ -1071,15 +1071,12 @@ echo '</div>';
                     <button type="button" data-type="ajax-loader" class="sabt_cost4 btn bg-light-green waves-effect">ثبت
                         هزینه
                     </button>
-
                 </div>
                 <button type="button" class="btn btn-link waves-effect pull-left" data-dismiss="modal">بستن</button>
             </div>
-
         </div>
     </div>
 </div>
-
 
 <!-- ِDebt -->
 <div class="modal fade " id="debt_modal" tabindex="-1" role="dialog" style="display: none;">
@@ -1092,7 +1089,6 @@ echo '</div>';
             </div>
             <hr style="border-top: 1px solid #008477;"/>
             <div class="modal-body">
-
 
                 <div class="row">
                     <div class="col-lg-6">
@@ -1114,15 +1110,12 @@ echo '</div>';
                                 <input type="tel" class="form-control" id="price6" aria-label="مبلغ به ریال"
                                        placeholder="مبلغ به ریال" onkeyup="javascript:this.value=separate(this.value);">
                             </div>
-
                         </div>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6" style="margin-bottom: 20px;">
                         <p class="mg-b-10">از حساب</p>
                         <select class="form-control show-tick" data-live-search="true" id="hesab6">
                             <option value="0" selected>--حساب را انتخاب نمایید--</option>
-
                             <?php
                             foreach ($sandugh as $key => $value) {
                                 if (is_array($value)) {
@@ -1136,33 +1129,26 @@ echo '</div>';
                                 }
                             }
                             ?>
-
                         </select>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6">
                         <p>
                             <b>به کی</b>
                         </p>
                         <select class="form-control show-tick" data-live-search="true" id="cst6">
-
                             <option value="0" selected>--شخص را انتخاب نمایید--</option>
                             <?php
-
                             foreach ($sub_ashkhas as $key => $value) {
                                 echo '<option value="' . $key . '">' . $value . '</option>';
                             }
                             ?>
-
                         </select>
                     </div><!-- col-3 -->
-
                     <div class="clearfix"></div>
                     <br/>
                     <div class="col-lg-12">
                         <textarea rows="3" class="form-control" id="sharh6" placeholder="شرح سند"></textarea>
                     </div><!-- col -->
-
                 </div><!-- row -->
             </div>
             <div class="modal-footer ">
@@ -1171,15 +1157,12 @@ echo '</div>';
                     <button type="button" data-type="ajax-loader" class="sabt_cost6 btn bg-light-green waves-effect">قرض
                         دادن
                     </button>
-
                 </div>
                 <button type="button" class="btn btn-link waves-effect pull-left" data-dismiss="modal">بستن</button>
             </div>
-
         </div>
     </div>
 </div>
-
 
 <!-- Payment -->
 <div class="modal fade " id="pay_modal" tabindex="-1" role="dialog" style="display: none;">
@@ -1192,7 +1175,6 @@ echo '</div>';
             </div>
             <hr style="border-top: 1px solid #008477;"/>
             <div class="modal-body">
-
 
                 <div class="row">
                     <div class="col-lg-6">
@@ -1214,15 +1196,12 @@ echo '</div>';
                                 <input type="tel" class="form-control" id="price7" aria-label="مبلغ به ریال"
                                        placeholder="مبلغ به ریال" onkeyup="javascript:this.value=separate(this.value);">
                             </div>
-
                         </div>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6" style="margin-bottom: 20px;">
                         <p class="mg-b-10">حساب</p>
                         <select class="form-control show-tick" data-live-search="true" id="hesab7">
                             <option value="0" selected>--حساب را انتخاب نمایید--</option>
-
                             <?php
                             foreach ($sandugh as $key => $value) {
                                 if (is_array($value)) {
@@ -1236,9 +1215,7 @@ echo '</div>';
                                 }
                             }
                             ?>
-
                         </select>
-
                     </div><!-- col-3 -->
                     <div class="col-lg-6">
                         <p>
@@ -1246,22 +1223,18 @@ echo '</div>';
                         </p>
                         <select class="form-control show-tick" data-live-search="true" id="cst7">
                             <option value="0" selected>--وام را انتخاب نمایید--</option>
-
                             <?php
                             foreach ($sub_vam as $key => $value) {
                                 echo '<option value="' . $key . '">' . $value . '</option>';
                             }
                             ?>
-
                         </select>
                     </div><!-- col-3 -->
-
                     <div class="clearfix"></div>
                     <br/>
                     <div class="col-lg-12">
                         <textarea rows="3" class="form-control" id="sharh7" placeholder="شرح سند"></textarea>
                     </div><!-- col -->
-
                 </div><!-- row -->
             </div>
             <div class="modal-footer ">
@@ -1269,231 +1242,20 @@ echo '</div>';
                     <input type="hidden" name="c_cost" id="c_cost7" value="c_cost"/>
                     <button type="button" data-type="ajax-loader" class="sabt_cost7 btn bg-light-green waves-effect">
                         پرداخت قسط
-
                     </button>
-
                 </div>
                 <button type="button" class="btn btn-link waves-effect pull-left" data-dismiss="modal">بستن</button>
             </div>
-
         </div>
     </div>
 </div>
 
 
-<!-- Multi Transaction Template -->
-<div
-        class="modal fade"
-        id="multi_document_template_modal"
-        tabindex="-1"
-        role="dialog"
-        style="display: none;">
 
-    <div class="modal-dialog modal-lg" role="document">
 
-        <div class="modal-content modal-col-indigo">
 
-            <div class="modal-header clearfix">
 
-                <h4 class="modal-title pull-right">
-                    ثبت سند چندتراکنشی
-                </h4>
 
-                <button
-                        type="button"
-                        class="close pull-left"
-                        data-dismiss="modal">
-                    ×
-                </button>
 
-            </div>
-
-            <hr style="border-top: 1px solid #3F51B5;"/>
-
-            <div class="modal-body">
-
-                <div class="row">
-
-                    <div class="col-lg-6">
-
-                        <p class="mg-b-10">
-                            الگوی ثبت سند
-                        </p>
-
-                        <select
-                                class="form-control show-tick"
-                                data-live-search="true"
-                                id="multi_document_template">
-
-                            <option value="">
-                                -- الگو را انتخاب نمایید --
-                            </option>
-
-                            <?php foreach (
-                                $multi_document_templates
-                                as $template
-                            ) { ?>
-
-                                <option
-                                        value="<?php echo (int)$template['id']; ?>">
-
-                                    <?php echo htmlspecialchars(
-                                        $template['name'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ); ?>
-
-                                </option>
-
-                            <?php } ?>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="col-lg-6">
-
-                        <p class="mg-b-10">
-                            تاریخ
-                        </p>
-
-                        <div class="input-group">
-
-                            <div class="input-group-prepend">
-
-                                <div class="input-group-text">
-
-                                    <i class="typcn typcn-calendar-outline tx-24 lh--9 op-6"></i>
-
-                                </div>
-
-                            </div>
-
-                            <input
-                                    type="text"
-                                    id="multi_document_date"
-                                    class="form-control fc-datepicker datep"
-                                    placeholder="MM/DD/YYYY">
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <hr>
-
-
-                <div id="multi_document_template_items">
-
-                    <div class="alert alert-info text-center">
-
-                        ابتدا یک الگو را انتخاب نمایید.
-
-                    </div>
-
-                </div>
-
-
-                <div
-                        id="multi_document_template_balance"
-                        style="display:none; margin-top:15px;">
-
-                    <div class="row">
-
-                        <div class="col-md-4">
-
-                            <div class="alert alert-info text-center">
-
-                                <strong>
-                                    جمع بدهکار
-                                </strong>
-
-                                <br>
-
-                                <span
-                                        id="multi_total_bed">
-                                    0
-                                </span>
-
-                                ریال
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="col-md-4">
-
-                            <div class="alert alert-info text-center">
-
-                                <strong>
-                                    جمع بستانکار
-                                </strong>
-
-                                <br>
-
-                                <span
-                                        id="multi_total_bes">
-                                    0
-                                </span>
-
-                                ریال
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="col-md-4">
-
-                            <div
-                                    id="multi_balance_status"
-                                    class="alert alert-warning text-center">
-
-                                در انتظار ورود مبلغ
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="modal-footer">
-
-                <button
-                        type="button"
-                        id="save_multi_document_template"
-                        data-type="ajax-loader"
-                        class="btn bg-light-green waves-effect">
-
-                    ثبت سند
-
-                </button>
-
-
-                <button
-                        type="button"
-                        class="btn btn-link waves-effect pull-left"
-                        data-dismiss="modal">
-
-                    بستن
-
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
 							
  

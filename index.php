@@ -18,11 +18,11 @@ require('header.php');
                         </div>
                         <div class="body">
                             <?php
-                            $templates = get_document_templates('cost');
+                            /*    $templates = get_document_templates('cost');
 
-                            echo '<pre>';
-                            print_r($templates);
-                            echo '</pre>';
+                      /*    echo '<pre>';
+                              print_r($templates);
+                              echo '</pre>';*/
                             ?>
                             <button class="btn btn-danger btn-sm my-3" style=" margin-bottom: 15px;" id="search_bx">جستجوی پیشرفته</button>
                             <div id="bx_s" style="display: none;border: 1px solid #D0CECE;" class="row mb-5 mt-1 pb-5">
