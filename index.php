@@ -126,14 +126,33 @@ function sanitizing(value) {
 }
 
 function updateTotal() {
-   
-  let total = 0;
-  const inputs = document.querySelectorAll('.price-input');
-  inputs.forEach(input => {
-    const val = parseFloat(sanitizing(input.value));
-    if (!isNaN(val)) total += val;
-  });
-  document.getElementById('total-price').textContent = 'مجموع : ' +separate(total);
+
+    let total = 0;
+    const inputs = document.querySelectorAll('.price-input');
+    inputs.forEach(input => {
+        const val = parseFloat(sanitizing(input.value));
+        if (!isNaN(val)) total += val;
+    });
+    document.getElementById('total-price').textContent = 'مجموع : ' +separate(total);
+}
+function updateTotal2() {
+
+    let total2 = 0;
+
+    const inputs = document.querySelectorAll('.price-input2');
+
+    inputs.forEach(input => {
+
+        const val2 = parseFloat(sanitizing(input.value));
+
+        if (!isNaN(val2)) {
+            total2 += val2;
+        }
+
+    });
+
+    document.getElementById('total-price2').textContent =
+        'مجموع : ' + separate(total2);
 }
 </script>
             <div class="row clearfix">
@@ -208,7 +227,7 @@ function updateTotal() {
             </div>
 <!-- End Row -->
 
-
+    <?php require('vam_installments.php'); ?>
 
         </div>
     </section>

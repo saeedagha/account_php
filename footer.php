@@ -819,6 +819,7 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
               var price = $("#price7").val();
               var sharh = $("#sharh7").val();
               var c_cost = $("#c_cost7").val();
+              var installments = $("#installment7").val();
               swal({
                   title: "افزودن تراکنش جدید",
                   text: "بر روی افزودن کلیک نمایید",
@@ -838,6 +839,8 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
                           price: price,
                           sharh: sharh,
                           c_cost: c_cost,
+                          installments: installments,
+                          vam_payment: 1,
                       },
                       function( data ) {
                           var result = jQuery.parseJSON(data);
@@ -855,6 +858,33 @@ div.dataTables_processing>div:last-child>div:nth-child(4) {
                       });
               });
           }
+      });
+      $("#cst7").on("change", function(){
+
+          let vam_id = $(this).val();
+
+          if(vam_id==0){
+              $("#installment_box").hide();
+              return;
+          }
+
+
+          $.post(
+              "<?php echo BASE_URL; ?>/inc/config/get_installments.php",
+              {
+                  vam_id:vam_id
+              },
+              function(data){
+
+                  $("#installment7").html(data);
+
+                  $('#installment7').selectpicker('refresh');
+
+                  $("#installment_box").show();
+
+              }
+          );
+
       });
       jQuery('.sabt_cost8').on('click', function () {
           var x = document.getElementById("tarikh8").value;

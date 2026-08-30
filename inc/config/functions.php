@@ -204,3 +204,83 @@ function get_document_template_account_options($accounts)
 
     return $result;
 }
+function get_vam_list()
+{
+    global $conn;
+
+    $sql="
+        SELECT 
+            id,
+            hesab_id,
+            title
+        FROM vams
+        WHERE status=1
+        ORDER BY id ASC
+    ";
+
+    $stmt=$conn->prepare($sql);
+    $stmt->execute();
+
+    $result=[];
+
+    while($row=$stmt->fetch(PDO::FETCH_ASSOC))
+    {
+        $result[$row['id']]=$row['title'];
+    }
+
+    return $result;
+}
+function get_vam_payment_list()
+{
+    global $conn;
+
+    $vams = sub_vam();
+
+    if(empty($vams)){
+        return [];
+    }
+
+
+    $ids = array_keys($vams);
+
+    $placeholders = implode(
+        ',',
+        array_fill(0,count($ids),'?')
+    );
+
+
+    $sql="
+        SELECT
+            v.id,
+            v.title
+
+        FROM vams v
+
+        INNER JOIN vam_installments vi
+            ON vi.vam_id = v.id
+
+        WHERE v.id IN ($placeholders)
+
+        GROUP BY
+            v.id,
+            v.title
+
+        ORDER BY v.id ASC
+    ";
+
+
+    $stmt=$conn->prepare($sql);
+    $stmt->execute($ids);
+
+
+    $result=[];
+
+
+    while($row=$stmt->fetch(PDO::FETCH_ASSOC))
+    {
+        $result[$row['id']]=$row['title'];
+    }
+
+
+    return $result;
+}

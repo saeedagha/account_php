@@ -1,6 +1,163 @@
 <?php
 /*
  * ==============================
+ * ثبت پرداخت قسط وام
+ * ==============================
+ */
+
+if(
+    isset($_POST['vam_payment'])
+    &&
+    $_POST['vam_payment']==1
+){
+
+    include "db.php";
+
+    $data=[
+        'res'=>'bad error'
+    ];
+
+
+    $tarikh = trim($_POST['tarikh'] ?? '');
+    $tarikh = str_replace('/','',$tarikh);
+
+
+    $bed = (int)($_POST['cst'] ?? 0);
+    $bes = (int)($_POST['hesab'] ?? 0);
+
+
+    $price = str_replace(',','',$_POST['price'] ?? 0);
+    $price = (int)$price;
+
+
+    $sharh = trim($_POST['sharh'] ?? '');
+
+
+    $installments = $_POST['installments'] ?? [];
+
+
+    if(
+        empty($installments)
+        ||
+        $bed<=0
+        ||
+        $bes<=0
+        ||
+        $price<=0
+    ){
+
+        echo json_encode([
+            'res'=>'bad error',
+            'message'=>'اطلاعات پرداخت کامل نیست'
+        ]);
+
+        exit;
+    }
+
+
+    try {
+
+        $conn->beginTransaction();
+
+
+        /*
+         * ثبت سند روزنامه
+         */
+
+        $sql="
+        INSERT INTO ruznameh
+        (
+            date,
+            sharh,
+            price,
+            hesab_bed,
+            hesab_bes
+        )
+        VALUES
+        (
+            :date,
+            :sharh,
+            :price,
+            :bed,
+            :bes
+        )
+        ";
+
+
+        $stmt=$conn->prepare($sql);
+
+
+        $stmt->execute([
+
+            ':date'=>$tarikh,
+            ':sharh'=>$sharh,
+            ':price'=>$price,
+            ':bed'=>$bed,
+            ':bes'=>$bes
+
+        ]);
+
+
+        /*
+         * بروزرسانی اقساط انتخاب شده
+         */
+
+        sort($installments);
+
+
+        $sql="
+        UPDATE vam_installments
+        SET
+            paid_amount = amount,
+            status = 2
+        WHERE id = :id
+        ";
+
+
+        $stmt=$conn->prepare($sql);
+
+
+        foreach($installments as $id){
+
+            $stmt->execute([
+                ':id'=>(int)$id
+            ]);
+
+        }
+
+
+
+        $conn->commit();
+
+
+        $data=[
+            'res'=>'registered'
+        ];
+
+
+    }catch(Exception $e){
+
+
+        if($conn->inTransaction()){
+            $conn->rollBack();
+        }
+
+
+        $data=[
+            'res'=>'bad error',
+            'message'=>$e->getMessage()
+        ];
+
+    }
+
+
+    echo json_encode($data);
+
+    exit;
+
+}
+/*
+ * ==============================
  * ثبت سند چندتراکنشی
  * ==============================
  */

@@ -1177,6 +1177,23 @@ echo '</div>';
             <div class="modal-body">
 
                 <div class="row">
+                    <div class="col-lg-12" style="margin-top:15px;">
+                        <p>
+                            <b>انتخاب قسط</b>
+                        </p>
+
+                        <select class="form-control show-tick"
+                                id="installment7"
+                                multiple
+                                data-live-search="true">
+
+                            <option value="0">
+                                -- ابتدا وام را انتخاب نمایید --
+                            </option>
+
+                        </select>
+
+                    </div>
                     <div class="col-lg-6">
                         <p class="mg-b-10">تاریخ</p>
                         <div class="input-group">
@@ -1224,6 +1241,7 @@ echo '</div>';
                         <select class="form-control show-tick" data-live-search="true" id="cst7">
                             <option value="0" selected>--وام را انتخاب نمایید--</option>
                             <?php
+
                             foreach ($sub_vam as $key => $value) {
                                 echo '<option value="' . $key . '">' . $value . '</option>';
                             }
